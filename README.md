@@ -8,8 +8,8 @@
 ## 진행 상황
 
 - [x] ① 수집 · ② 정리 — `scripts/fetch_shuttle.py` → `data/stops.json`
-- [ ] ③ 좌표 붙이기 (원주·충주 시내 경유지)
-- [ ] ④ 검증
+- [x] ③ 좌표 붙이기 — `scripts/geocode_stops.py` (카카오 장소검색 23곳 + `data/overrides.json` 8곳)
+- [x] ④ 검증 — `scripts/validate.py`
 - [ ] ⑤ 정적 데이터 `shuttle.json`
 - [ ] ⑥ 웹 화면 `/shuttle/`
 - [ ] ⑦ 변경 감시
@@ -78,9 +78,13 @@
 
 ```bash
 python3 scripts/fetch_shuttle.py
+KAKAO_REST_KEY=... python3 scripts/geocode_stops.py
+python3 scripts/validate.py
 ```
 
-표준 라이브러리만 씁니다.
+표준 라이브러리만 씁니다. `geocode_stops.py`는 [카카오 REST API 키](https://developers.kakao.com/console/app)(카카오맵 사용 설정 필요)가 있어야 합니다.
+
+원주·충주 경유지 좌표의 `source`는 `kakao`(장소검색 첫 결과) 또는 `override`(손으로 지정)입니다. `approx: true`는 같은 상호를 찾지 못해 근처 장소로 대신한 좌표입니다(현재 원주 '강원자동차정비기술학원' 1곳).
 
 ## 출처
 
