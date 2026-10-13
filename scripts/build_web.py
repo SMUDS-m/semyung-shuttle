@@ -30,6 +30,9 @@ def main():
         routes.append(item)
     data = {k: v for k, v in meta.items() if k not in ("routes", "_source", "transit")}
     data.update(routes=routes, source=meta["_source"], built=date.today().isoformat())
+    lastmile = ROOT / "data" / "lastmile.json"
+    if lastmile.exists():
+        data["lastmile"] = json.loads(lastmile.read_text())
     transit = ROOT / "data" / "transit.json"
     if transit.exists():
         data["transit"] = json.loads(transit.read_text())

@@ -1,0 +1,55 @@
+{
+ "제천": {
+  "info": {
+   "totalTime": 35,
+   "payment": 1650,
+   "totalWalk": 226
+  },
+  "subPath": [
+   {
+    "trafficType": 3,
+    "sectionTime": 1,
+    "distance": 36
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 31,
+    "distance": 7530,
+    "startName": "제천역",
+    "endName": "세명대학술관앞",
+    "stationCount": 22,
+    "lane": [
+     {
+      "busNo": "31(제천역.세명대.대원대(순환))",
+      "type": 1,
+      "busID": 2530212,
+      "busLocalBlID": "JCB273000032",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "53(강저동.세명대.대원대)",
+      "type": 1,
+      "busID": 2530060,
+      "busLocalBlID": "JCB273000214",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "31(제천역.세명대.대원대(편도))",
+      "type": 1,
+      "busID": 2530005,
+      "busLocalBlID": "JCB273000034",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 190
+   }
+  ]
+ }
+}
