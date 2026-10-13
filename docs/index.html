@@ -50,6 +50,7 @@ button{font:inherit;cursor:pointer;border:0}
 .rtbtn{width:100%;margin:0 0 10px;padding:10px;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:14px}
 .rtbtn[aria-expanded="true"]{outline:2px solid var(--c)}
 .rtslot{margin:0 0 12px}
+.rtlinks{margin:0 0 10px}
 .rtslot:empty{display:none}
 .res .links button{font:inherit;font-size:13px;font-weight:700;color:var(--brand);padding:7px 10px;border-radius:9px;background:var(--soft)}
 .pickslot:empty{display:none}
@@ -333,11 +334,25 @@ function describe({ r, s, i, k }, now) {
            est: !r.arrive, depText: fmt(bus.dep), trips: s.times.length };
 }
 
-function kakaoLinks(s) {
+// 카카오맵 자동차 길찾기: 탑승 정류장 → 뒤 정류장들을 경유(최대 5곳) → 세명대
+const KAKAO_MAX_VIA = 5;
+function busRouteLink(r, from) {
+  const pt = (name, lat, lng) => `${encodeURIComponent(name.replace(/,/g, " "))},${lat},${lng}`;
+  const rest = r.stops.slice(from + 1);
+  let via = rest;
+  if (rest.length > KAKAO_MAX_VIA) {  // 고르게 뽑되 마지막 정류장은 꼭 넣는다
+    via = Array.from({ length: KAKAO_MAX_VIA }, (_, k) => rest[Math.round((k + 1) * (rest.length - 1) / KAKAO_MAX_VIA)]);
+    via = [...new Set(via)];
+  }
+  const s = r.stops[from], c = DATA.campus.board;
+  return "https://map.kakao.com/link/by/car/" + [pt(s.name, s.lat, s.lng), ...via.map(v => pt(v.name, v.lat, v.lng)), pt("세명대학교", c.lat, c.lng)].join("/");
+}
+
+function kakaoLinks(r, s, i) {
   const name = encodeURIComponent(s.place || s.name);
   const to = `${name},${s.lat},${s.lng}`;
-  const route = me ? `https://map.kakao.com/link/from/${encodeURIComponent("내 위치")},${me.lat},${me.lng}/to/${to}` : `https://map.kakao.com/link/to/${to}`;
-  return `<a href="${route}" target="_blank" rel="noopener">카카오맵 길찾기</a><a href="https://map.kakao.com/link/map/${to}" target="_blank" rel="noopener">정류장 위치 보기</a>`;
+  const walk = me ? `https://map.kakao.com/link/by/walk/${encodeURIComponent("내 위치")},${me.lat},${me.lng}/${to}` : `https://map.kakao.com/link/to/${to}`;
+  return `<a href="${walk}" target="_blank" rel="noopener">정류장까지 길찾기</a><a href="${busRouteLink(r, i)}" target="_blank" rel="noopener">🚌 버스 경로(카카오맵)</a><a href="https://map.kakao.com/link/map/${to}" target="_blank" rel="noopener">정류장 위치</a>`;
 }
 
 function renderResults() {
@@ -359,7 +374,7 @@ function renderResults() {
       </div>
       <div class="state ${d.cls}">${d.state}</div>
       <div class="back">${esc(d.back)}</div>
-      <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">🗺️ ${esc(x.r.name)} 노선 경로</button>${kakaoLinks(x.s)}</div>
+      <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">🗺️ ${esc(x.r.name)} 노선 경로</button>${kakaoLinks(x.r, x.s, x.i)}</div>
     </article>`;
   }).join("");
 
@@ -529,6 +544,7 @@ function renderLists() {
     const bt = r.back.times.length ? `하교 학교 출발 ${r.back.times.join(" · ")}${r.back.fri ? ` (금 ${r.back.fri.join(" · ")})` : ""}. ` : "";
     return `<details class="rt" data-id="${r.id}" style="--c:${r.color}"><summary><i></i>${esc(r.name)}<span>등교 ${first.join(" · ")}<br>소요 ${Math.floor(r.minutes / 60)}시간${r.minutes % 60 ? " " + r.minutes % 60 + "분" : ""}</span></summary>
       <button class="rtbtn" type="button" data-id="${r.id}" aria-expanded="false">🗺️ 경로 보기</button>
+      <div class="links rtlinks"><a href="${busRouteLink(r, 0)}" target="_blank" rel="noopener">카카오맵에서 노선 경로 보기${r.stops.length > KAKAO_MAX_VIA + 1 ? ` (경유 ${KAKAO_MAX_VIA}곳)` : ""}</a></div>
       <div class="mapslot rtslot" id="slot-r-${r.id}"></div>
       <ol class="line">${stops}<li class="school"><span>세명대 문화관 앞 도착<em>${r.arrive ? "학교 공지 시각" : "예상 (출발 + 소요시간)"}</em></span><time>${arr.join(" · ")}</time></li></ol>
       <p class="note">${esc(bt + r.back.note)}</p></details>`;
