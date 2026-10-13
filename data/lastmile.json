@@ -3,13 +3,13 @@
   "info": {
    "totalTime": 35,
    "payment": 1650,
-   "totalWalk": 226
+   "totalWalk": 228
   },
   "subPath": [
    {
     "trafficType": 3,
     "sectionTime": 1,
-    "distance": 36
+    "distance": 38
    },
    {
     "trafficType": 2,
@@ -40,6 +40,217 @@
       "type": 1,
       "busID": 2530005,
       "busLocalBlID": "JCB273000034",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 190
+   }
+  ]
+ },
+ "봉양": {
+  "info": {
+   "totalTime": 49,
+   "payment": 1650,
+   "totalWalk": 865
+  },
+  "subPath": [
+   {
+    "trafficType": 3,
+    "sectionTime": 10,
+    "distance": 671
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 36,
+    "distance": 9898,
+    "startName": "명도2리",
+    "endName": "세명대학술관",
+    "stationCount": 23,
+    "lane": [
+     {
+      "busNo": "77(세명대.봉양중앙APT)",
+      "type": 1,
+      "busID": 2530094,
+      "busLocalBlID": "JCB273000248",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "77(봉양중앙APT.세명대)",
+      "type": 1,
+      "busID": 2530009,
+      "busLocalBlID": "JCB273000250",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 194
+   }
+  ]
+ },
+ "제천버스터미널": {
+  "info": {
+   "totalTime": 29,
+   "payment": 1650,
+   "totalWalk": 375
+  },
+  "subPath": [
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 185
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 23,
+    "distance": 5710,
+    "startName": "시외버스터미널앞",
+    "endName": "세명대학술관앞",
+    "stationCount": 15,
+    "lane": [
+     {
+      "busNo": "31(제천역.세명대.대원대(순환))",
+      "type": 1,
+      "busID": 2530212,
+      "busLocalBlID": "JCB273000032",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "53(강저동.세명대.대원대)",
+      "type": 1,
+      "busID": 2530060,
+      "busLocalBlID": "JCB273000214",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "31(제천역.세명대.대원대(편도))",
+      "type": 1,
+      "busID": 2530005,
+      "busLocalBlID": "JCB273000034",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 190
+   }
+  ]
+ },
+ "제천고속버스터미널": {
+  "info": {
+   "totalTime": 29,
+   "payment": 1650,
+   "totalWalk": 382
+  },
+  "subPath": [
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 192
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 23,
+    "distance": 5710,
+    "startName": "시외버스터미널앞",
+    "endName": "세명대학술관앞",
+    "stationCount": 15,
+    "lane": [
+     {
+      "busNo": "31(제천역.세명대.대원대(순환))",
+      "type": 1,
+      "busID": 2530212,
+      "busLocalBlID": "JCB273000032",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "53(강저동.세명대.대원대)",
+      "type": 1,
+      "busID": 2530060,
+      "busLocalBlID": "JCB273000214",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     },
+     {
+      "busNo": "31(제천역.세명대.대원대(편도))",
+      "type": 1,
+      "busID": 2530005,
+      "busLocalBlID": "JCB273000034",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 3,
+    "distance": 190
+   }
+  ]
+ },
+ "봉양정류소": {
+  "info": {
+   "totalTime": 67,
+   "payment": 1650,
+   "totalWalk": 690
+  },
+  "subPath": [
+   {
+    "trafficType": 3,
+    "sectionTime": 8,
+    "distance": 500
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 31,
+    "distance": 8582,
+    "startName": "명도1리회관(안말)",
+    "endName": "중앙우체국",
+    "stationCount": 19,
+    "lane": [
+     {
+      "busNo": "470(장락로즈웰.봉양농협(명도2리.안말))",
+      "type": 1,
+      "busID": 2831888,
+      "busLocalBlID": "JCB273000286",
+      "busCityCode": 11020,
+      "busProviderCode": 73
+     }
+    ]
+   },
+   {
+    "trafficType": 3,
+    "sectionTime": 0,
+    "distance": 0
+   },
+   {
+    "trafficType": 2,
+    "sectionTime": 25,
+    "distance": 6206,
+    "startName": "중앙우체국",
+    "endName": "세명대학술관앞",
+    "stationCount": 17,
+    "lane": [
+     {
+      "busNo": "31(제천역.세명대.대원대(순환))",
+      "type": 1,
+      "busID": 2530212,
+      "busLocalBlID": "JCB273000032",
       "busCityCode": 11020,
       "busProviderCode": 73
      }

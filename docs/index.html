@@ -24,6 +24,7 @@
   --bg:#0f1520;--card:#18202e;--ink:#e8edf5;--sub:#9aa7bb;--line:#2a3445;
   --brand:#5b8fd9;--brand-ink:#0f1520;--go:#4cc38a;--warn:#f59e5b;--miss:#f97066;--soft:#1d2a40;color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);
   font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
 main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom));display:grid;gap:14px}
@@ -110,8 +111,18 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
-.plan{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
-.plan h3{margin:0;font-size:16px}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  padding:4px;margin:0 -4px;border-radius:14px;background:var(--bg);box-shadow:0 6px 10px -8px rgba(0,0,0,.25)}
+.tabs button{padding:12px 8px;border-radius:11px;background:var(--card);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:15px}
+.tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.view{display:grid;gap:14px}
+#mapbox{display:grid;gap:10px}
+#view-transit .legend{display:none}
+.from{font-size:14px;padding:10px 12px;border-radius:10px;background:var(--soft);margin:10px 0 8px}
+#planBtn{width:100%}
+#planBtn:disabled{opacity:.45;cursor:not-allowed}
+#planOut{display:grid;gap:10px}
+.hubmark{padding:3px 8px;border-radius:8px;background:#173f7a;color:#fff;font-size:12px;font-weight:800;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);white-space:nowrap}
 .opt{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px}
 .opt .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .opt .head b{font-size:17px;font-variant-numeric:tabular-nums}
@@ -139,60 +150,83 @@ footer a{color:var(--brand)}
 <main>
 <header>
   <h1>세명대 셔틀 노선도</h1>
-  <p>통학버스 11개 노선 · 정류장 51곳. 내 위치에서 가까운 정류장과 출발·도착 시각을 알려 드려요.</p>
+  <p>통학버스 11개 노선과 정류장 51곳, 버스·기차로 오는 대중교통 길찾기까지 한곳에서 볼 수 있어요.</p>
   <div class="today" id="today">오늘 운행 여부 확인 중</div>
 </header>
 
-<section class="card" aria-labelledby="h-find">
-  <h2 id="h-find">가까운 정류장 찾기</h2>
-  <div class="find">
-    <button class="btn" id="locate" type="button">📍 내 위치로 찾기</button>
-    <button class="btn ghost" id="pick" type="button" aria-pressed="false">지도에서 고르기</button>
-  </div>
-  <p class="msg" id="msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
-  <div class="results" id="results" aria-live="polite"></div>
-  <div class="plan" id="plan" hidden>
-    <h3>🧭 세명대까지 대중교통 길찾기</h3>
-    <p class="note" id="planNote">셔틀 대신 버스·지하철·기차로 가는 정확한 경로와 시간을 찾아요.</p>
-    <button class="btn ghost" id="planBtn" type="button">경로 찾기</button>
-    <div id="planOut" aria-live="polite"></div>
-  </div>
-</section>
+<nav class="tabs" role="tablist" aria-label="보기 선택">
+  <button type="button" role="tab" id="tab-shuttle" data-view="shuttle" aria-controls="view-shuttle" aria-selected="true">🚌 셔틀버스</button>
+  <button type="button" role="tab" id="tab-transit" data-view="transit" aria-controls="view-transit" aria-selected="false">🧭 대중교통 길찾기</button>
+</nav>
 
-<div id="map" role="region" aria-label="통학버스 노선 지도"></div>
-<div class="legend" id="legend" aria-label="노선 보기 필터"></div>
-
-<section class="card" aria-labelledby="h-routes">
-  <h2 id="h-routes">노선별 시간표</h2>
-  <p class="note">학기 중 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
-  <div id="routes"></div>
-</section>
-
-<section class="card" aria-labelledby="h-tr">
-  <h2 id="h-tr">다른 교통편</h2>
-  <p class="note">통학버스가 없는 시간·지역이라면 기차나 시외버스로 제천까지 온 뒤 시내버스·택시로 학교에 오면 돼요.</p>
-  <div class="seg" role="tablist" id="trTabs">
-    <button type="button" role="tab" data-tab="train" aria-selected="true">🚄 기차</button>
-    <button type="button" role="tab" data-tab="bus" aria-selected="false">🚌 시외버스</button>
-    <button type="button" role="tab" data-tab="city" aria-selected="false">🚏 시내버스·택시</button>
-  </div>
-  <div class="trctl" id="trCtl">
-    <div class="seg small" id="trDir">
-      <button type="button" data-dir="to_jecheon" aria-pressed="true">제천으로</button>
-      <button type="button" data-dir="from_jecheon" aria-pressed="false">제천에서</button>
+<div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-shuttle">
+  <section class="card" aria-labelledby="h-find">
+    <h2 id="h-find">가까운 정류장 찾기</h2>
+    <div class="find">
+      <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
+      <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
-    <label class="sel"><span id="trFromLabel">출발</span>
-      <select id="trFrom"></select></label>
-  </div>
-  <div id="trBody" aria-live="polite"></div>
-</section>
+    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
+    <div class="results" id="results" aria-live="polite"></div>
+  </section>
 
-<section class="card" aria-labelledby="h-fare">
-  <h2 id="h-fare">요금과 문의</h2>
-  <div class="tbl"><table id="fares"></table></div>
-  <p class="note" style="margin-top:10px">통학증(월 정기권)은 학생회관 201호 학생처에서 방문 발급. 편도는 월요일 등교·금요일 하교만, 해당 주 월~목 사전예약.</p>
-  <div class="tbl"><table id="contacts"></table></div>
-</section>
+  <div class="mapslot" id="slot-shuttle">
+    <div id="mapbox">
+      <div id="map" role="region" aria-label="지도"></div>
+      <div class="legend" id="legend" aria-label="노선 보기 필터"></div>
+    </div>
+  </div>
+
+  <section class="card" aria-labelledby="h-routes">
+    <h2 id="h-routes">노선별 시간표</h2>
+    <p class="note">학기 중 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
+    <div id="routes"></div>
+  </section>
+
+  <section class="card" aria-labelledby="h-fare">
+    <h2 id="h-fare">요금과 문의</h2>
+    <div class="tbl"><table id="fares"></table></div>
+    <p class="note" style="margin-top:10px">통학증(월 정기권)은 학생회관 201호 학생처에서 방문 발급. 편도는 월요일 등교·금요일 하교만, 해당 주 월~목 사전예약.</p>
+    <div class="tbl"><table id="contacts"></table></div>
+  </section>
+</div>
+
+<div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" hidden>
+  <section class="card" aria-labelledby="h-plan">
+    <h2 id="h-plan">세명대까지 대중교통 길찾기</h2>
+    <p class="note">셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.</p>
+    <div class="find">
+      <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
+      <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
+    </div>
+    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
+    <div class="from" id="planFrom">출발지를 먼저 정해 주세요.</div>
+    <button class="btn" id="planBtn" type="button" disabled>🧭 세명대까지 경로 찾기</button>
+    <p class="note" id="planNote"></p>
+    <div id="planOut" aria-live="polite"></div>
+  </section>
+
+  <div class="mapslot" id="slot-transit"></div>
+
+  <section class="card" aria-labelledby="h-tr">
+    <h2 id="h-tr">기차·시외버스·시내버스 시간표</h2>
+    <p class="note">기차나 시외버스로 제천까지 온 뒤 시내버스·택시로 학교에 오면 돼요.</p>
+    <div class="seg" role="tablist" id="trTabs">
+      <button type="button" role="tab" data-tab="train" aria-selected="true">🚄 기차</button>
+      <button type="button" role="tab" data-tab="bus" aria-selected="false">🚌 시외버스</button>
+      <button type="button" role="tab" data-tab="city" aria-selected="false">🚏 시내버스·택시</button>
+    </div>
+    <div class="trctl" id="trCtl">
+      <div class="seg small" id="trDir">
+        <button type="button" data-dir="to_jecheon" aria-pressed="true">제천으로</button>
+        <button type="button" data-dir="from_jecheon" aria-pressed="false">제천에서</button>
+      </div>
+      <label class="sel"><span id="trFromLabel">출발</span>
+        <select id="trFrom"></select></label>
+    </div>
+    <div id="trBody" aria-live="polite"></div>
+  </section>
+</div>
 
 <footer>
   시간은 모두 학교 공지 시간표 기준이에요. 버스 실시간 위치는 공개되지 않아 알 수 없어요.
@@ -206,7 +240,8 @@ footer a{color:var(--brand)}
 const KAKAO_JS_KEY = "f27e2da08431ef8d983a83fccfcf1eb7";
 const WALK_M_PER_MIN = 67, DETOUR = 1.3, WALK_LIMIT_KM = 3;
 const DAYS = ["일","월","화","수","목","금","토"];
-let DATA, map, me = null, meMarker = null, picking = false, active = null, pop = null;
+let DATA, map, me = null, meMarker = null, picking = false, active = null, pop = null, view = "shuttle", hubMarks = [];
+function setMsg(text, err, only) { document.querySelectorAll(only ? `#view-${only} .js-msg` : ".js-msg").forEach(m => { m.className = "msg js-msg" + (err ? " err" : ""); m.textContent = text; }); }
 const layers = {};
 
 const $ = s => document.querySelector(s);
@@ -319,18 +354,19 @@ function renderResults() {
       <div class="links">${kakaoLinks(x.s)}</div>
     </article>`;
   }).join("");
-  fit([[me.lat, me.lng], ...list.map(x => [x.s.lat, x.s.lng])], 40, 3);
+  if (view === "shuttle") fit([[me.lat, me.lng], ...list.map(x => [x.s.lat, x.s.lng])], 40, 3);
   const far = list[0].k > 30;
-  $("#msg").className = "msg";
-  $("#msg").textContent = far
-    ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요.`
-    : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.";
+  setMsg(far
+    ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요. '대중교통 길찾기' 탭도 확인해 보세요.`
+    : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.", false, "shuttle");
+  setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
 }
 
 function setMe(lat, lng, label) {
-  me = { lat, lng };
-  $("#plan").hidden = false;
-  $("#planOut").innerHTML = "";
+  me = { lat, lng, label };
+  $("#planFrom").innerHTML = `출발지: <b>${esc(label)}</b>`;
+  $("#planBtn").disabled = false;
+  $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
   if (tr.tab === "city") renderTransit();
   if (meMarker) meMarker.setMap(null);
   const el = document.createElement("div");
@@ -338,29 +374,49 @@ function setMe(lat, lng, label) {
   meMarker = new kakao.maps.CustomOverlay({ position: ll(lat, lng), content: el, zIndex: 10 });
   meMarker.setMap(map);
   renderResults();
+  if (view === "transit") fitTransit();
 }
 
 function locate() {
-  const msg = $("#msg");
-  if (!navigator.geolocation) { msg.className = "msg err"; msg.textContent = "이 브라우저는 위치 찾기를 지원하지 않아요. '지도에서 고르기'를 눌러 주세요."; return; }
-  msg.className = "msg"; msg.textContent = "위치를 찾는 중이에요…";
+  if (!navigator.geolocation) { setMsg("이 브라우저는 위치 찾기를 지원하지 않아요. '지도에서 고르기'를 눌러 주세요.", true); return; }
+  setMsg("위치를 찾는 중이에요…");
   navigator.geolocation.getCurrentPosition(
     p => setMe(p.coords.latitude, p.coords.longitude, `내 위치 (오차 ${Math.round(p.coords.accuracy)}m)`),
-    e => {
-      msg.className = "msg err";
-      msg.textContent = e.code === 1
+    e => setMsg(e.code === 1
         ? "위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용하거나 '지도에서 고르기'로 출발 위치를 눌러 주세요."
-        : "위치를 찾지 못했어요. 잠시 뒤 다시 누르거나 '지도에서 고르기'를 써 주세요.";
-    },
+        : "위치를 찾지 못했어요. 잠시 뒤 다시 누르거나 '지도에서 고르기'를 써 주세요.", true),
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
 }
 
 function togglePick() {
   picking = !picking;
-  $("#pick").classList.toggle("on", picking);
-  $("#pick").setAttribute("aria-pressed", picking);
+  document.querySelectorAll(".js-pick").forEach(b => { b.classList.toggle("on", picking); b.setAttribute("aria-pressed", picking); });
   map.setCursor(picking ? "crosshair" : "");
-  if (picking) { $("#msg").className = "msg"; $("#msg").textContent = "지도에서 출발할 곳을 눌러 주세요."; }
+  if (picking) { setMsg("지도에서 출발할 곳을 눌러 주세요."); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); }
+}
+
+// ---- 탭 전환: 지도 하나를 탭 사이로 옮겨 쓴다 ----
+function fitTransit() {
+  const c = DATA.campus.board, h = DATA.transit.hubs;
+  const pts = [[c.lat, c.lng], [h.station.lat, h.station.lng], [h.terminal.lat, h.terminal.lng]];
+  if (me) pts.push([me.lat, me.lng]);
+  fit(pts, 40, 4);
+}
+function showView(v, push) {
+  view = v;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
+  $("#view-shuttle").hidden = v !== "shuttle";
+  $("#view-transit").hidden = v !== "transit";
+  $("#slot-" + v).appendChild($("#mapbox"));
+  if (push) history.replaceState(null, "", v === "transit" ? "#transit" : location.pathname + location.search);
+  if (!map) return;
+  map.relayout();
+  if (pop) pop.setMap(null);
+  DATA.routes.forEach(r => layers[r.id].forEach(i => i.setMap(v === "shuttle" && (!active || active === r.id) ? map : null)));
+  hubMarks.forEach(m => m.setMap(v === "transit" ? map : null));
+  if (v === "transit") fitTransit();
+  else if (me) renderResults();
+  else fit(DATA.routes.flatMap(r => r.stops.map(s => [s.lat, s.lng])), 20);
 }
 
 function stopPopup(r, s) {
@@ -410,6 +466,11 @@ function drawMap() {
     items.forEach(i => i.setMap(map));
     layers[r.id] = items;
   });
+  Object.values(DATA.transit.hubs).forEach(h => {
+    const el = document.createElement("div");
+    el.className = "hubmark"; el.textContent = h.name;
+    hubMarks.push(new kakao.maps.CustomOverlay({ position: ll(h.lat, h.lng), content: el, yAnchor: 1.4, zIndex: 4 }));
+  });
   fit(DATA.routes.flatMap(r => r.stops.map(s => [s.lat, s.lng])).concat([[campus.lat, campus.lng]]), 20);
   kakao.maps.event.addListener(map, "click", e => {
     if (picking) { togglePick(); setMe(e.latLng.getLat(), e.latLng.getLng(), "고른 위치"); }
@@ -419,7 +480,7 @@ function drawMap() {
 function showOnly(id) {
   active = active === id ? null : id;
   if (pop) pop.setMap(null);
-  DATA.routes.forEach(r => layers[r.id].forEach(i => i.setMap(!active || active === r.id ? map : null)));
+  DATA.routes.forEach(r => layers[r.id].forEach(i => i.setMap(view === "shuttle" && (!active || active === r.id) ? map : null)));
   document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === active));
   const r = DATA.routes.find(x => x.id === active);
   if (r) fit(r.stops.map(s => [s.lat, s.lng]), 40, 4);
@@ -697,17 +758,20 @@ function loadKakao() {
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
   renderToday(); renderLists(); bindTransit();
+  document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view, true); });
+  showView(location.hash === "#transit" ? "transit" : "shuttle");
   try { await loadKakao(); } catch {
     $("#map").innerHTML = '<div class="maperr">카카오맵을 불러오지 못했어요. 새로고침해 보세요.<br>아래 시간표와 정류장 위치 링크는 그대로 쓸 수 있어요.</div>';
-    $("#locate").disabled = $("#pick").disabled = true;
+    document.querySelectorAll(".js-locate,.js-pick").forEach(b => b.disabled = true);
     return;
   }
   drawMap();
-  $("#locate").addEventListener("click", locate);
-  $("#pick").addEventListener("click", togglePick);
+  showView(view);
+  document.querySelectorAll(".js-locate").forEach(b => b.addEventListener("click", locate));
+  document.querySelectorAll(".js-pick").forEach(b => b.addEventListener("click", togglePick));
   $("#planBtn").addEventListener("click", () => me && plan(me));
   setInterval(renderResults, 60000);
-}).catch(() => { $("#msg").className = "msg err"; $("#msg").textContent = "노선 자료를 불러오지 못했어요. 새로고침해 주세요."; });
+}).catch(() => setMsg("노선 자료를 불러오지 못했어요. 새로고침해 주세요.", true));
 </script>
 </body>
 </html>
