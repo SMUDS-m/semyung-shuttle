@@ -27,11 +27,27 @@
 [hidden]{display:none!important}
 html,body{margin:0;background:var(--bg);color:var(--ink);
   font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
-main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom));display:grid;gap:14px}
-header h1{margin:4px 0 2px;font-size:clamp(22px,6vw,30px);letter-spacing:-.6px;text-wrap:balance}
-header p{margin:0;color:var(--sub);font-size:14px;line-height:1.5}
-.today{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:5px 10px;border-radius:99px;
+/* 앱처럼: 위·아래 바는 고정, 가운데만 스크롤 */
+html{scroll-padding-top:calc(var(--top,140px) + 10px);scroll-padding-bottom:calc(var(--bottom,64px) + 10px)}
+body{font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+main{max-width:720px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px calc(var(--bottom,64px) + 24px);display:grid;gap:16px}
+.appbar,.appfoot{position:fixed;left:0;right:0;z-index:50;background:var(--card)}
+.appbar{top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;border-bottom:1px solid var(--line);box-shadow:0 4px 14px -10px rgba(0,0,0,.35)}
+.appfoot{bottom:0;padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 8px);border-top:1px solid var(--line);box-shadow:0 -4px 14px -10px rgba(0,0,0,.35)}
+.bar-in{max-width:720px;margin:0 auto;display:grid;gap:10px}
+.titlerow{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.appbar h1{margin:0;font-size:21px;letter-spacing:-.5px;line-height:1.3}
+.today{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:99px;
   font-size:13px;font-weight:700;background:var(--soft);color:var(--brand)}
+.appfoot .bar-in{display:flex;align-items:center;gap:10px}
+.appfoot .deptlogo{padding:4px 8px;border-radius:8px}
+.appfoot .deptlogo img{height:26px}
+.ftxt{display:grid;font-size:13px;line-height:1.35;color:var(--sub);min-width:0}
+.ftxt a{color:var(--ink);font-weight:800;text-decoration:none;display:inline-block;padding:6px 0;margin:-6px 0}
+.fhome{margin-left:auto;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;white-space:nowrap}
+.about address{font-style:normal;font-size:14.5px;line-height:1.7;color:var(--sub)}
+.about address b{color:var(--ink)}
+.about a{color:var(--brand)}
 .today.off{color:var(--miss)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .card h2{margin:0 0 10px;font-size:17px;letter-spacing:-.3px}
@@ -104,7 +120,7 @@ table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{font-size:12px;color:var(--sub)}
 .tel{font-variant-numeric:tabular-nums;user-select:all;font-weight:700}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--soft);padding:4px;border-radius:12px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;background:var(--soft);padding:4px;border-radius:12px}
 .seg button{padding:10px 6px;border-radius:9px;background:transparent;color:var(--sub);font-weight:800;font-size:14px}
 .seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .seg.small button{padding:7px 10px;font-size:13px}
@@ -122,9 +138,8 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
-.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;display:grid;grid-template-columns:1fr 1fr;gap:4px;
-  padding:4px;margin:0 -4px;border-radius:14px;background:var(--bg);box-shadow:0 6px 10px -8px rgba(0,0,0,.25)}
-.tabs button{padding:12px 8px;border-radius:11px;background:var(--card);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:15px}
+.tabs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.tabs button{min-height:46px;padding:6px;line-height:1.25;word-break:keep-all;border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:16px}
 .tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .view{display:grid;gap:14px}
 #mapbox{display:grid;gap:10px}
@@ -148,33 +163,84 @@ th{font-size:12px;color:var(--sub)}
 .legs .no+.no{margin-left:0}
 .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:6px}
 @keyframes sp{to{transform:rotate(360deg)}}
-footer .fnote{margin:0}
-footer .dept{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:8px;justify-items:start}
-.deptlogo{display:inline-flex;padding:8px 12px;border-radius:10px;background:#fff;border:1px solid var(--line)}
-.deptlogo img{display:block;height:36px;width:auto}
-footer address{font-style:normal;line-height:1.6}
-footer .made{margin:0;font-weight:700}
-footer{font-size:12.5px;color:var(--sub);line-height:1.6}
-footer a{color:var(--brand)}
+.deptlogo{display:inline-flex;background:#fff;border:1px solid var(--line);flex:none}
+.deptlogo img{display:block;width:auto}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#2f6fed;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,237,.25)}
 .campus{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;
   font-weight:900;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-@media (max-width:420px){.facts{grid-template-columns:1fr 1fr}.find{grid-template-columns:1fr}}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* ---- 스마트폰 가독성: 본문 16px 기준, 작은 글자 13px 이상, 누르는 곳 44px 이상 ---- */
+.card{padding:16px;border-radius:18px}
+.card h2{font-size:19px;margin:0 0 12px}
+.note{font-size:14.5px;line-height:1.65}
+.msg{font-size:15px}
+.find{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+.btn{min-height:52px;font-size:16.5px;padding:8px 10px;line-height:1.3;word-break:keep-all}
+.btn.ghost{font-size:15.5px}
+.results{gap:12px}
+.res{padding:14px;gap:10px}
+.res h3{font-size:18px;line-height:1.35}
+.res .route{font-size:14px}
+.res .rank{font-size:13px}
+.res .place{font-size:14px}
+.facts{gap:8px}
+.fact{padding:10px}
+.fact small{font-size:13px}
+.fact b{font-size:22px;line-height:1.2}
+.fact span{font-size:13px;line-height:1.35}
+.state{font-size:15.5px}
+.back{font-size:14.5px}
+.links{gap:8px}
+.links a,.res .links button{font-size:14.5px;min-height:44px;padding:0 12px;display:inline-flex;align-items:center}
+details.rt summary{min-height:60px;padding:12px 2px;font-size:17.5px}
+details.rt summary span{font-size:14px;line-height:1.4}
+.rtbtn{min-height:48px;font-size:16px}
+.line li{font-size:15.5px;padding:8px 0;line-height:1.4}
+.line li em{font-size:13px}
+.line li time{font-size:15px}
+table{font-size:15px}
+th{font-size:13px}
+th,td{padding:10px 8px}
+.seg button{min-height:46px;font-size:15px;line-height:1.25;word-break:keep-all;padding:6px 4px}
+.seg.small button{min-height:40px;font-size:14.5px}
+.sel{font-size:14.5px}
+.sel select{font-size:16px;min-height:42px}
+.kind{font-size:13px}
+.sum{font-size:15.5px;line-height:1.6}
+.hub{padding:14px}
+.hub h3{font-size:17px}
+.hub p{font-size:15px;line-height:1.6}
+.from{font-size:15.5px}
+.opt{padding:14px}
+.opt .head b{font-size:19px}
+.opt .head span{font-size:14px}
+.legs li{font-size:15px;padding:8px 0}
+.legs li small{font-size:13px}
+.legs li time{font-size:15px}
+.legs .no{font-size:13px;padding:2px 7px}
+#map{height:min(55vh,400px)}
+/* 격자 칸이 안쪽 표 폭에 끌려 늘어나지 않게: 칸은 화면 폭, 넓은 표는 .tbl 안에서만 가로 스크롤 */
+main,.view,.results,#planOut,.bar-in{grid-template-columns:minmax(0,1fr)}
+main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
+@media (min-width:600px){.card{padding:20px}}
 </style>
 </head>
 <body>
-<main>
-<header>
-  <h1>세명대 통학 길잡이</h1>
-  <p>통학버스 11개 노선과 정류장 51곳, 버스·기차로 오는 대중교통 길찾기까지 한곳에서 볼 수 있어요.</p>
-  <div class="today" id="today">오늘 운행 여부 확인 중</div>
-</header>
-
-<nav class="tabs" role="tablist" aria-label="보기 선택">
+<header class="appbar" id="appbar">
+  <div class="bar-in">
+    <div class="titlerow">
+      <h1>세명대 통학 길잡이</h1>
+      <div class="today" id="today">오늘 운행 여부 확인 중</div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="보기 선택">
   <button type="button" role="tab" id="tab-shuttle" data-view="shuttle" aria-controls="view-shuttle" aria-selected="true">🚌 셔틀버스</button>
   <button type="button" role="tab" id="tab-transit" data-view="transit" aria-controls="view-transit" aria-selected="false">🧭 대중교통 길찾기</button>
 </nav>
+  </div>
+</header>
+
+<main>
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-shuttle">
   <section class="card" aria-labelledby="h-find">
@@ -243,23 +309,29 @@ footer a{color:var(--brand)}
   <div id="mapbox" hidden><div id="map" role="region" aria-label="지도"></div></div>
 </div>
 
-<footer>
-  <p class="fnote">시간은 모두 학교 공지 시간표 기준이에요. 버스 실시간 위치는 공개되지 않아 알 수 없어요.
+<section class="card about" aria-labelledby="h-about">
+  <h2 id="h-about">안내</h2>
+  <p class="note">시간은 모두 학교 공지 시간표 기준이에요. 버스 실시간 위치는 공개되지 않아 알 수 없어요.
   거리는 직선거리에 1.3을 곱한 어림값이고, 걷는 시간은 분당 67m로 계산했어요.
   운행은 학사일정·승차인원에 따라 바뀔 수 있으니 <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>와 세명통통 앱 알림을 확인하세요.
   <br>자료: <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a> · 학교 공식 서비스가 아닙니다.</p>
-  <div class="dept">
+  <address>
+    <b>세명대학교 재난안전학과</b><br>
+    27136 충청북도 제천시 세명로 65 (신월동) 이공학관 117호<br>
+    TEL <a class="tel" href="tel:043-649-1778">043-649-1778</a> ·
+    <a href="https://www.semyung.ac.kr/smds.do" target="_blank" rel="noopener">www.semyung.ac.kr/smds.do</a>
+  </address>
+</section>
+</main>
+
+<footer class="appfoot" id="appfoot">
+  <div class="bar-in">
     <a class="deptlogo" href="https://www.semyung.ac.kr/smds.do" target="_blank" rel="noopener" title="세명대학교 재난안전학과 홈페이지">
-      <img src="smu_logo.png" width="168" height="36" alt="세명대학교 재난안전학과"></a>
-    <address>
-      27136 충청북도 제천시 세명로 65 (신월동) 세명대학교 이공학관 117호<br>
-      TEL <span class="tel">043-649-1778</span> ·
-      <a href="https://www.semyung.ac.kr/smds.do" target="_blank" rel="noopener">www.semyung.ac.kr/smds.do</a>
-    </address>
-    <p class="made">만든 곳: 세명대학교 재난안전학과</p>
+      <img src="smu_logo.png" width="122" height="26" alt="세명대학교 재난안전학과"></a>
+    <div class="ftxt"><span>학과 사무실</span><a class="tel" href="tel:043-649-1778">☎ 043-649-1778</a></div>
+    <a class="fhome" href="https://www.semyung.ac.kr/smds.do" target="_blank" rel="noopener">학과 홈</a>
   </div>
 </footer>
-</main>
 
 <script>
 const KAKAO_JS_KEY = "f27e2da08431ef8d983a83fccfcf1eb7";
@@ -325,6 +397,7 @@ function describe({ r, s, i, k }, now) {
       const spare = bus.dep - ready;
       if (!canWalk) { state = `오늘 ${t + 1}호차 ${s.times[t]} 출발`; cls = "warn"; }
       else if (spare <= 5) { state = `지금 바로 나가야 해요 · 여유 ${spare}분`; cls = "warn"; }
+      else if (spare > 90) { state = `${fmt(bus.dep - walkMin)}까지 나가면 돼요`; cls = "go"; }
       else { state = `지금 출발하면 ${spare}분 여유`; cls = "go"; }
     }
   }
@@ -386,7 +459,7 @@ function renderResults() {
       <div class="facts">
         <div class="fact"><small>정류장까지</small>${walk}</div>
         <div class="fact"><small>버스 출발${d.trips > 1 ? ` · ${d.bus.trip + 1}호차` : ""}</small><b>${d.depText}</b><span>${d.canWalk && !d.bus.later ? fmt(d.leave) + "까지 출발" : "학기 중 평일"}</span></div>
-        <div class="fact"><small>학교 도착 ${d.est ? "예상" : "예정"}</small><b>${fmt(d.arr)}</b><span>${d.est ? "공지 소요시간 기준" : "학교 공지 시각"}</span></div>
+        <div class="fact"><small>도착 ${d.est ? "예상" : "예정"}</small><b>${fmt(d.arr)}</b><span>${d.est ? "소요시간 기준" : "학교 공지"}</span></div>
       </div>
       <div class="state ${d.cls}">${d.state}</div>
       <div class="back">${esc(d.back)}</div>
@@ -821,6 +894,15 @@ function loadKakao() {
     document.head.appendChild(s);
   });
 }
+
+// 고정 바 높이만큼 본문 위아래 여백을 맞춘다
+function syncBars() {
+  const r = document.documentElement.style;
+  r.setProperty("--top", $("#appbar").offsetHeight + "px");
+  r.setProperty("--bottom", $("#appfoot").offsetHeight + "px");
+}
+syncBars();
+if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe($("#appbar")); ro.observe($("#appfoot")); }
 
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
