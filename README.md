@@ -1,6 +1,8 @@
 # 세명대 셔틀 노선도
 
-세명대학교(제천) 통학버스 노선을 지도에 그리고, **내 위치에서 가까운 정류장**과 **거리·도착시간**을 알려 주는 웹 페이지를 만드는 프로젝트입니다.
+세명대학교(제천) 통학버스 노선을 지도에 그리고, **내 위치에서 가까운 정류장**과 **거리·도착시간**을 알려 주는 웹 페이지입니다.
+
+**👉 https://smuds-m.github.io/semyung-shuttle/**
 
 > 모든 시간은 학교 공지 시간표 기준입니다. 운행업체가 버스 위치를 공개하지 않아 실시간 위치는 없습니다.
 > 운행사항은 학사일정·승차인원에 따라 바뀌므로 이용 전 [학교 공지](https://www.semyung.ac.kr/kor/sub05_04_01.do)를 확인하세요.
@@ -10,8 +12,8 @@
 - [x] ① 수집 · ② 정리 — `scripts/fetch_shuttle.py` → `data/stops.json`
 - [x] ③ 좌표 붙이기 — `scripts/geocode_stops.py` (카카오 장소검색 23곳 + `data/overrides.json` 8곳)
 - [x] ④ 검증 — `scripts/validate.py`
-- [ ] ⑤ 정적 데이터 `shuttle.json`
-- [ ] ⑥ 웹 화면 `/shuttle/`
+- [x] ⑤ 정적 데이터 — `scripts/build_web.py` → `docs/shuttle.json`
+- [x] ⑥ 웹 화면 — `docs/index.html` (GitHub Pages)
 - [ ] ⑦ 변경 감시
 
 ## 파이프라인
@@ -28,7 +30,7 @@
 | ② 정리 | 노선별 정류장 순서, 등교 출발시각(1·2호차), 하교시각, 소요시간, 요금, 운행업체 연락처 구조화 | `data/raw/` → `data/stops.json` |
 | ③ 좌표 붙이기 | 학교 페이지에 좌표가 있는 22곳은 그대로 사용. 원주·충주 경유지(31곳)는 지오코딩하고, 손으로 고친 `overrides.json`이 있으면 우선 적용 | → 정류장마다 `lat`, `lng`, `source` |
 | ④ 검증 | 좌표가 해당 시 경계 안인지, 시각이 순서대로인지 확인. 하나라도 어긋나면 중단 | 실패 시 알림 |
-| ⑤ 정적 데이터 | 웹에서 읽을 파일 하나로 출력 (서버 함수 불필요) | `shuttle.json` |
+| ⑤ 정적 데이터 | 좌표(`stops.json`)와 시간표(`routes.json`)를 웹에서 읽을 파일 하나로 합침 (서버 불필요) | `docs/shuttle.json` |
 | ⑥ 웹 화면 | 지도(Leaflet + OpenStreetMap), 노선별 색 표시, GPS로 가까운 정류장 3곳과 거리·시간 | 계산은 모두 브라우저에서 |
 | ⑦ 변경 감시 | 매주 월 07:00 ①~④를 다시 돌려 이전 데이터와 비교, 바뀐 항목이 있으면 알림 | 배포는 사람이 확인한 뒤 |
 
@@ -80,7 +82,10 @@
 python3 scripts/fetch_shuttle.py
 KAKAO_REST_KEY=... python3 scripts/geocode_stops.py
 python3 scripts/validate.py
+python3 scripts/build_web.py
 ```
+
+`data/routes.json`의 노선별 시간·요금·하교 정보는 학교 공지를 보고 손으로 옮긴 값입니다. 공지가 바뀌면 이 파일을 고친 뒤 `build_web.py`를 다시 실행하세요.
 
 표준 라이브러리만 씁니다. `geocode_stops.py`는 [카카오 REST API 키](https://developers.kakao.com/console/app)(카카오맵 사용 설정 필요)가 있어야 합니다.
 

@@ -1,0 +1,62 @@
+{
+ "_source": "세명대 통학증 이용 안내(sub05_04_01, 최종수정 2026-04-08) · 출발장소 상세노선 팝업",
+ "campus": {
+  "board": {"name": "문화관 앞 주차장", "desc": "민송도서관 뒤편 문화관 앞 주차장 (등교 하차·하교 승차)", "lat": 37.180875, "lng": 128.192822},
+  "intercity": {"name": "세명학사 앞 정류장", "desc": "직통 시외버스 승하차", "lat": 37.179789, "lng": 128.199834}
+ },
+ "routes": [
+  {"id": "jamsil", "name": "잠실", "color": "#d6336c", "minutes": 110, "fare": "metro",
+   "stops": [{"area": "잠실", "times": ["07:20", "10:00"]}],
+   "back": {"times": ["18:40"], "note": "막차 18:40은 잠실역 → 구리 순. 막차 이전 차량은 세명통통 예약, 모두 잠실역 부근 하차. 요청 시 복정역 경유(16시 이후 출발 제외)"}},
+  {"id": "cityhall", "name": "시청·강동", "color": "#e8590c", "minutes": 120, "fare": "metro",
+   "stops": [{"area": "시청", "times": ["06:50"]}, {"area": "강동(길동)", "times": ["07:20"]}, {"area": "강동(상일동)", "times": ["07:30"]}],
+   "back": {"times": [], "note": "등교만 운행. 하교는 잠실 차량 이용"}},
+  {"id": "sangbong", "name": "상봉·구리", "color": "#f59f00", "minutes": 120, "fare": "metro",
+   "stops": [{"area": "상봉", "times": ["07:00"]}, {"area": "구리", "times": ["07:10"]}],
+   "back": {"times": ["18:40"], "only": ["구리"], "note": "상봉은 등교만 운행. 하교는 잠실 막차(잠실역 → 구리) 이용"}},
+  {"id": "hanam", "name": "하남", "color": "#37b24d", "minutes": 110, "fare": "metro",
+   "stops": [{"area": "하남(망월동)", "times": ["07:20"]}, {"area": "하남(덕풍동)", "times": ["07:30"]}, {"area": "하남(창우동)", "times": ["07:35"]}],
+   "back": {"times": ["18:40"], "note": "등교 노선 역순"}},
+  {"id": "moran", "name": "모란·야탑", "color": "#0ca678", "minutes": 100, "fare": "metro",
+   "stops": [{"area": "모란", "times": ["07:20"]}, {"area": "야탑", "times": ["07:30"]}],
+   "back": {"times": ["18:40"], "only": ["야탑"], "note": "모란은 등교만 운행. 하교는 야탑 차량 이용"}},
+  {"id": "suwon", "name": "수원", "color": "#1c7ed6", "minutes": 145, "fare": "metro",
+   "stops": [{"area": "수원(매탄동)", "times": ["06:40"]}, {"area": "수원(동수원)", "times": ["06:50"]}, {"area": "수원(북수원)", "times": ["07:00"]}],
+   "back": {"times": ["18:40"], "note": "등교 노선 역순"}},
+  {"id": "yongin", "name": "죽전·용인", "color": "#4263eb", "minutes": 130, "fare": "metro",
+   "stops": [{"area": "죽전", "times": ["07:00"]}, {"area": "용인", "times": ["07:40"]}],
+   "back": {"times": ["18:40"], "note": "용인 → 죽전"}},
+  {"id": "songnae", "name": "송내·안양", "color": "#7048e8", "minutes": 170, "fare": "songnae",
+   "stops": [{"area": "송내(부천)", "times": ["06:10"]}, {"area": "안양", "times": ["07:00"]}],
+   "back": {"times": ["18:40"], "note": "안양 → 송내"}},
+  {"id": "icheon", "name": "이천·여주", "color": "#ae3ec9", "minutes": 90, "fare": "icheon",
+   "stops": [{"area": "이천", "times": ["07:45"]}, {"area": "여주", "times": ["08:10"]}],
+   "back": {"times": ["18:40"], "note": "여주 → 이천"}},
+  {"id": "wonju", "name": "원주 시내", "color": "#495057", "minutes": 70, "fare": "wonju", "city": "원주",
+   "arrive": ["09:10", "11:15"],
+   "back": {"times": ["16:40", "18:40"], "note": "등교 노선 역순. 막차 이전 차량은 세명통통 예약"}},
+  {"id": "chungju", "name": "충주 시내", "color": "#868e96", "minutes": 65, "fare": "chungju", "city": "충주",
+   "arrive": ["09:10", "11:15"],
+   "back": {"times": ["15:40", "17:40", "18:40"], "fri": ["14:40", "16:40", "18:40"], "note": "등교 노선 역순. 막차 이전 차량은 세명통통 예약"}}
+ ],
+ "intercity": {
+  "name": "동서울 직통 시외버스", "operator": "경기고속·대원고속",
+  "terminal": {"name": "동서울종합터미널", "lat": 37.534607, "lng": 127.094188},
+  "to_campus": {"days": "매일(공휴일 포함)", "sun_thu": ["06:30", "09:30", "11:00", "14:00", "17:00"], "fri_sat": ["06:30", "09:30", "11:00"]},
+  "to_seoul": {"days": "월~토(일요일·공휴일 미운행)", "mon_fri": ["13:00", "18:00"], "sat": ["13:00"]},
+  "fare": "재학생 할인 우등 11,400원 · 일반 8,800원 (정상가 16,300원 · 12,600원), 학생증 제시"
+ },
+ "fares": {
+  "metro":   {"label": "수도권", "day": 7400, "month": 148000, "oneway": 14000},
+  "songnae": {"label": "송내", "day": 8550, "month": 171000, "oneway": 17000},
+  "icheon":  {"label": "이천·여주", "day": 6250, "month": 125000, "oneway": 10000, "note": "여주 1일 5,900원 · 월 118,000원"},
+  "wonju":   {"label": "원주", "day": 4450, "month": 89000, "oneway": 5000},
+  "chungju": {"label": "충주", "day": 4450, "month": 89000, "oneway": 5000}
+ },
+ "contacts": [
+  {"area": "서울·경기", "name": "두레고속관광", "tel": "02-465-0700"},
+  {"area": "원주", "name": "보람항공여행사", "tel": "033-745-3247"},
+  {"area": "충주", "name": "나이스관광여행사", "tel": "043-855-6336"},
+  {"area": "통학증·예약", "name": "세명대 학생지원팀 (학생회관 201호)", "tel": "043-649-1146"}
+ ]
+}

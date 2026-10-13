@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>세명대 셔틀 노선도</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%9A%8C%3C/text%3E%3C/svg%3E">
+<meta name="description" content="세명대학교 통학버스 11개 노선과 정류장. 내 위치에서 가까운 정류장, 걸어가는 시간, 버스 출발·학교 도착 시각을 알려 줍니다.">
+<meta property="og:title" content="세명대 셔틀 노선도">
+<meta property="og:description" content="가까운 통학버스 정류장과 출발·도착 시각을 한 번에">
+<meta property="og:url" content="https://smuds-m.github.io/semyung-shuttle/">
+<meta name="theme-color" content="#173f7a">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* 노선도 = 지하철 노선도 문법: 흰 바탕, 굵은 색 선, 정류장은 흰 속 원 */
+:root{
+  --bg:#f3f5f8;--card:#fff;--ink:#14213a;--sub:#5d6b82;--line:#dfe4ec;
+  --brand:#173f7a;--brand-ink:#fff;--go:#1f8a5b;--warn:#c2410c;--miss:#b42318;--soft:#eaf0fa;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1520;--card:#18202e;--ink:#e8edf5;--sub:#9aa7bb;--line:#2a3445;
+  --brand:#5b8fd9;--brand-ink:#0f1520;--go:#4cc38a;--warn:#f59e5b;--miss:#f97066;--soft:#1d2a40;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1520;--card:#18202e;--ink:#e8edf5;--sub:#9aa7bb;--line:#2a3445;
+  --brand:#5b8fd9;--brand-ink:#0f1520;--go:#4cc38a;--warn:#f59e5b;--miss:#f97066;--soft:#1d2a40;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:720px;margin:0 auto;padding:16px 16px calc(40px + env(safe-area-inset-bottom));display:grid;gap:14px}
+header h1{margin:4px 0 2px;font-size:clamp(22px,6vw,30px);letter-spacing:-.6px;text-wrap:balance}
+header p{margin:0;color:var(--sub);font-size:14px;line-height:1.5}
+.today{display:inline-flex;gap:6px;align-items:center;margin-top:8px;padding:5px 10px;border-radius:99px;
+  font-size:13px;font-weight:700;background:var(--soft);color:var(--brand)}
+.today.off{color:var(--miss)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.card h2{margin:0 0 10px;font-size:17px;letter-spacing:-.3px}
+button{font:inherit;cursor:pointer;border:0}
+.find{display:grid;grid-template-columns:1fr auto;gap:8px}
+.btn{padding:14px 16px;border-radius:12px;font-weight:800;font-size:16px;background:var(--brand);color:var(--brand-ink)}
+.btn.ghost{background:var(--soft);color:var(--brand);font-size:14px;font-weight:700}
+.btn.ghost.on{outline:2px solid var(--brand)}
+.btn:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.msg{margin:10px 0 0;font-size:14px;color:var(--sub);line-height:1.5}
+.msg.err{color:var(--miss)}
+#map{height:min(62vh,460px);border-radius:16px;border:1px solid var(--line);overflow:hidden;background:var(--soft)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
+:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
+.leaflet-popup-content{font-family:inherit;font-size:13px;line-height:1.5;margin:10px 12px}
+.leaflet-popup-content b{font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font-size:13px;font-weight:700}
+.chip i{width:14px;height:5px;border-radius:3px;background:var(--c)}
+.chip.on{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.results{display:grid;gap:10px;margin-top:12px}
+.res{border:1px solid var(--line);border-left:6px solid var(--c);border-radius:12px;padding:12px;display:grid;gap:8px}
+.res .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
+.res .rank{font-size:12px;color:var(--sub);font-weight:700}
+.res h3{margin:0;font-size:16px;min-width:0}
+.res .route{font-size:12.5px;font-weight:800;color:var(--c)}
+.res .place{font-size:13px;color:var(--sub);margin:-4px 0 0}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.fact{background:var(--soft);border-radius:10px;padding:8px}
+.fact small{display:block;font-size:11.5px;color:var(--sub);font-weight:700;letter-spacing:.2px}
+.fact b{display:block;font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px}
+.fact span{display:block;font-size:12px;color:var(--sub);margin-top:1px}
+.state{font-size:13.5px;font-weight:800}
+.state.go{color:var(--go)}.state.warn{color:var(--warn)}.state.miss{color:var(--miss)}
+.back{font-size:13px;color:var(--sub);line-height:1.5}
+.links{display:flex;gap:8px;flex-wrap:wrap}
+.links a{font-size:13px;font-weight:700;color:var(--brand);text-decoration:none;padding:7px 10px;border-radius:9px;background:var(--soft)}
+details.rt{border-top:1px solid var(--line)}
+details.rt:first-of-type{border-top:0}
+details.rt summary{display:flex;align-items:center;gap:10px;padding:12px 2px;cursor:pointer;list-style:none;font-weight:800}
+details.rt summary::-webkit-details-marker{display:none}
+details.rt summary i{width:10px;height:28px;border-radius:5px;background:var(--c);flex:none}
+details.rt summary span{color:var(--sub);font-weight:600;font-size:13px;margin-left:auto;text-align:right}
+.line{list-style:none;margin:0 0 12px;padding:0 0 0 10px;position:relative}
+.line::before{content:"";position:absolute;left:15px;top:10px;bottom:10px;width:5px;border-radius:3px;background:var(--c)}
+.line li{position:relative;display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:5px 0;font-size:14px}
+.line li::before{content:"";width:11px;height:11px;border-radius:50%;background:var(--card);border:3px solid var(--c);z-index:1}
+.line li.school::before{background:var(--c)}
+.line li em{font-style:normal;color:var(--sub);font-size:12px;display:block}
+.line li time{font-variant-numeric:tabular-nums;font-weight:700;font-size:13px;white-space:nowrap}
+.note{font-size:13px;color:var(--sub);line-height:1.55;margin:0 0 10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+.tbl{overflow-x:auto}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--sub)}
+.tel{font-variant-numeric:tabular-nums;user-select:all;font-weight:700}
+footer{font-size:12.5px;color:var(--sub);line-height:1.6}
+footer a{color:var(--brand)}
+.dot-me{width:16px;height:16px;border-radius:50%;background:#2f6fed;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,237,.25)}
+.campus{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;
+  font-weight:900;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+@media (max-width:420px){.facts{grid-template-columns:1fr 1fr}.find{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>세명대 셔틀 노선도</h1>
+  <p>통학버스 11개 노선 · 정류장 51곳. 내 위치에서 가까운 정류장과 출발·도착 시각을 알려 드려요.</p>
+  <div class="today" id="today">오늘 운행 여부 확인 중</div>
+</header>
+
+<section class="card" aria-labelledby="h-find">
+  <h2 id="h-find">가까운 정류장 찾기</h2>
+  <div class="find">
+    <button class="btn" id="locate" type="button">📍 내 위치로 찾기</button>
+    <button class="btn ghost" id="pick" type="button" aria-pressed="false">지도에서 고르기</button>
+  </div>
+  <p class="msg" id="msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
+  <div class="results" id="results" aria-live="polite"></div>
+</section>
+
+<div id="map" role="region" aria-label="통학버스 노선 지도"></div>
+<div class="legend" id="legend" aria-label="노선 보기 필터"></div>
+
+<section class="card" aria-labelledby="h-routes">
+  <h2 id="h-routes">노선별 시간표</h2>
+  <p class="note">학기 중 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
+  <div id="routes"></div>
+</section>
+
+<section class="card" aria-labelledby="h-ic">
+  <h2 id="h-ic">동서울 직통 시외버스</h2>
+  <div id="intercity"></div>
+</section>
+
+<section class="card" aria-labelledby="h-fare">
+  <h2 id="h-fare">요금과 문의</h2>
+  <div class="tbl"><table id="fares"></table></div>
+  <p class="note" style="margin-top:10px">통학증(월 정기권)은 학생회관 201호 학생처에서 방문 발급. 편도는 월요일 등교·금요일 하교만, 해당 주 월~목 사전예약.</p>
+  <div class="tbl"><table id="contacts"></table></div>
+</section>
+
+<footer>
+  시간은 모두 학교 공지 시간표 기준이에요. 버스 실시간 위치는 공개되지 않아 알 수 없어요.
+  거리는 직선거리에 1.3을 곱한 어림값이고, 걷는 시간은 분당 67m로 계산했어요.
+  운행은 학사일정·승차인원에 따라 바뀔 수 있으니 <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>와 세명통통 앱 알림을 확인하세요.
+  <br>자료: <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a> · 학교 공식 서비스가 아닙니다.
+</footer>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const WALK_M_PER_MIN = 67, DETOUR = 1.3, WALK_LIMIT_KM = 3;
+const DAYS = ["일","월","화","수","목","금","토"];
+let DATA, map, me = null, meMarker = null, picking = false, active = null;
+const layers = {};
+
+const $ = s => document.querySelector(s);
+const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+const fmt = m => { m = ((Math.round(m) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const won = n => n.toLocaleString("ko-KR") + "원";
+
+function km(a, b) {
+  const r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lng - a.lng) * r;
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+const distText = k => k < 1 ? Math.round(k * 1000) + "m" : k.toFixed(k < 10 ? 1 : 0) + "km";
+const isWeekday = d => d.getDay() >= 1 && d.getDay() <= 5;
+function nextServiceDay(d) {
+  const n = new Date(d); do { n.setDate(n.getDate() + 1); } while (!isWeekday(n));
+  return n;
+}
+
+// 학교 도착 시각: 원주·충주는 공지값, 나머지는 첫 정류장 출발 + 소요시간
+function arriveAt(route, trip) {
+  if (route.arrive) return toMin(route.arrive[trip]);
+  return toMin(route.stops[0].times[trip]) + route.minutes;
+}
+function backTimes(route, day) {
+  if (!route.back.times.length) return [];
+  return day === 5 && route.back.fri ? route.back.fri : route.back.times;
+}
+
+function nearest(pt) {
+  const all = [];
+  DATA.routes.forEach(r => r.stops.forEach((s, i) => all.push({ r, s, i, k: km(pt, s) })));
+  all.sort((a, b) => a.k - b.k);
+  const seen = new Set(), out = [];
+  for (const x of all) {
+    const key = x.s.lat.toFixed(4) + "," + x.s.lng.toFixed(4);
+    if (seen.has(key)) continue;
+    seen.add(key); out.push(x);
+    if (out.length === 3) break;
+  }
+  return out;
+}
+
+function describe({ r, s, i, k }, now) {
+  const walkKm = k * DETOUR, walkMin = Math.ceil(walkKm * 1000 / WALK_M_PER_MIN);
+  const canWalk = walkKm <= WALK_LIMIT_KM;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const ready = nowMin + (canWalk ? walkMin : 0);
+  const service = isWeekday(now);
+  let bus = null, state, cls;
+  if (service) {
+    const t = s.times.findIndex(t => toMin(t) >= ready);
+    if (t >= 0) {
+      bus = { trip: t, dep: toMin(s.times[t]) };
+      const spare = bus.dep - ready;
+      if (!canWalk) { state = `오늘 ${t + 1}호차 ${s.times[t]} 출발`; cls = "warn"; }
+      else if (spare <= 5) { state = `지금 바로 나가야 해요 · 여유 ${spare}분`; cls = "warn"; }
+      else { state = `지금 출발하면 ${spare}분 여유`; cls = "go"; }
+    }
+  }
+  if (!bus) {
+    const nd = nextServiceDay(now);
+    bus = { trip: 0, dep: toMin(s.times[0]), later: nd };
+    state = service ? `오늘 등교 버스는 끝났어요 · ${DAYS[nd.getDay()]}요일 첫차` : `오늘은 운행하지 않아요 · ${DAYS[nd.getDay()]}요일 첫차`;
+    cls = "miss";
+  }
+  const arr = arriveAt(r, bus.trip);
+  const leave = bus.dep - (canWalk ? walkMin : 0);
+
+  // 하교: 학교 출발 + (학교 도착 − 이 정류장 출발)
+  const day = service ? now.getDay() : bus.later.getDay();
+  let back;
+  const bt = backTimes(r, day);
+  if (bt.length && (!r.back.only || r.back.only.includes(s.name))) {
+    const ride = arriveAt(r, 0) - toMin(s.times[0]);
+    back = `하교: 학교 ${bt.join(" · ")} 출발 → 여기 도착 예상 ${bt.map(t => fmt(toMin(t) + ride)).join(" · ")}`;
+  } else back = "하교: " + r.back.note;
+
+  return { walkKm, walkMin, canWalk, bus, state, cls, arr, leave, back,
+           est: !r.arrive, depText: fmt(bus.dep), trips: s.times.length };
+}
+
+function kakaoLinks(s) {
+  const name = encodeURIComponent(s.place || s.name);
+  const to = `${name},${s.lat},${s.lng}`;
+  const route = me ? `https://map.kakao.com/link/from/${encodeURIComponent("내 위치")},${me.lat},${me.lng}/to/${to}` : `https://map.kakao.com/link/to/${to}`;
+  return `<a href="${route}" target="_blank" rel="noopener">카카오맵 길찾기</a><a href="https://map.kakao.com/link/map/${to}" target="_blank" rel="noopener">정류장 위치 보기</a>`;
+}
+
+function renderResults() {
+  if (!me) return;
+  const now = new Date(), list = nearest(me);
+  $("#results").innerHTML = list.map((x, n) => {
+    const d = describe(x, now);
+    const walk = d.canWalk
+      ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>`
+      : `<b>${distText(d.walkKm)}</b><span>걷기엔 멀어요 · 버스·차 이용</span>`;
+    return `<article class="res" style="--c:${x.r.color}">
+      <div class="top"><h3>${esc(x.s.name)}${x.s.approx ? " (위치 근사)" : ""}</h3><span class="route">${esc(x.r.name)} 노선</span></div>
+      ${x.s.place ? `<p class="place">${esc(x.s.place)}</p>` : ""}
+      <div class="rank">${n + 1}번째로 가까운 정류장</div>
+      <div class="facts">
+        <div class="fact"><small>정류장까지</small>${walk}</div>
+        <div class="fact"><small>버스 출발${d.trips > 1 ? ` · ${d.bus.trip + 1}호차` : ""}</small><b>${d.depText}</b><span>${d.canWalk && !d.bus.later ? fmt(d.leave) + "까지 출발" : "학기 중 평일"}</span></div>
+        <div class="fact"><small>학교 도착 ${d.est ? "예상" : "예정"}</small><b>${fmt(d.arr)}</b><span>${d.est ? "공지 소요시간 기준" : "학교 공지 시각"}</span></div>
+      </div>
+      <div class="state ${d.cls}">${d.state}</div>
+      <div class="back">${esc(d.back)}</div>
+      <div class="links">${kakaoLinks(x.s)}</div>
+    </article>`;
+  }).join("");
+  const b = L.latLngBounds([[me.lat, me.lng], ...list.map(x => [x.s.lat, x.s.lng])]);
+  map.fitBounds(b, { padding: [40, 40], maxZoom: 16 });
+  const far = list[0].k > 30;
+  $("#msg").className = "msg";
+  $("#msg").textContent = far
+    ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요.`
+    : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.";
+}
+
+function setMe(lat, lng, label) {
+  me = { lat, lng };
+  if (meMarker) meMarker.remove();
+  meMarker = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<div class="dot-me"></div>', iconSize: [16, 16] }), zIndexOffset: 1000 })
+    .addTo(map).bindTooltip(label);
+  renderResults();
+}
+
+function locate() {
+  const msg = $("#msg");
+  if (!navigator.geolocation) { msg.className = "msg err"; msg.textContent = "이 브라우저는 위치 찾기를 지원하지 않아요. '지도에서 고르기'를 눌러 주세요."; return; }
+  msg.className = "msg"; msg.textContent = "위치를 찾는 중이에요…";
+  navigator.geolocation.getCurrentPosition(
+    p => setMe(p.coords.latitude, p.coords.longitude, `내 위치 (오차 ${Math.round(p.coords.accuracy)}m)`),
+    e => {
+      msg.className = "msg err";
+      msg.textContent = e.code === 1
+        ? "위치 권한이 꺼져 있어요. 브라우저 설정에서 위치를 허용하거나 '지도에서 고르기'로 출발 위치를 눌러 주세요."
+        : "위치를 찾지 못했어요. 잠시 뒤 다시 누르거나 '지도에서 고르기'를 써 주세요.";
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+}
+
+function togglePick() {
+  picking = !picking;
+  $("#pick").classList.toggle("on", picking);
+  $("#pick").setAttribute("aria-pressed", picking);
+  map.getContainer().style.cursor = picking ? "crosshair" : "";
+  if (picking) { $("#msg").className = "msg"; $("#msg").textContent = "지도에서 출발할 곳을 눌러 주세요."; }
+}
+
+function stopPopup(r, s) {
+  const trips = s.times.map((t, i) => `${s.times.length > 1 ? i + 1 + "호차 " : ""}${t}`).join(" · ");
+  return `<b>${esc(s.name)}</b><br>${s.place ? esc(s.place) + "<br>" : ""}<span style="color:${r.color};font-weight:700">${esc(r.name)}</span> 등교 ${trips}<br><a href="https://map.kakao.com/link/map/${encodeURIComponent(s.place || s.name)},${s.lat},${s.lng}" target="_blank" rel="noopener">카카오맵에서 보기</a>`;
+}
+
+function drawMap() {
+  map = L.map("map", { zoomControl: true, scrollWheelZoom: false });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+  const campus = DATA.campus.board;
+  L.marker([campus.lat, campus.lng], { icon: L.divIcon({ className: "", html: '<div class="campus">세명</div>', iconSize: [30, 30] }), zIndexOffset: 900 })
+    .addTo(map).bindPopup(`<b>세명대학교 ${esc(campus.name)}</b><br>${esc(campus.desc)}`);
+  DATA.routes.forEach(r => {
+    const g = L.layerGroup();
+    const pts = r.stops.map(s => [s.lat, s.lng]);
+    L.polyline(pts, { color: r.color, weight: 6, opacity: .9 }).addTo(g);
+    L.polyline([pts[pts.length - 1], [campus.lat, campus.lng]], { color: r.color, weight: 3, opacity: .55, dashArray: "6 8" }).addTo(g);
+    r.stops.forEach(s => L.circleMarker([s.lat, s.lng], { radius: 6, color: r.color, weight: 3, fillColor: "#fff", fillOpacity: 1 })
+      .bindPopup(stopPopup(r, s)).addTo(g));
+    g.addTo(map); layers[r.id] = g;
+  });
+  map.fitBounds(L.latLngBounds(DATA.routes.flatMap(r => r.stops.map(s => [s.lat, s.lng])).concat([[campus.lat, campus.lng]])), { padding: [20, 20] });
+  map.on("click", e => { if (picking) { togglePick(); setMe(e.latlng.lat, e.latlng.lng, "고른 위치"); } });
+  map.on("focus", () => map.scrollWheelZoom.enable());
+}
+
+function showOnly(id) {
+  active = active === id ? null : id;
+  DATA.routes.forEach(r => { const on = !active || active === r.id; on ? layers[r.id].addTo(map) : layers[r.id].remove(); });
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === active));
+  const r = DATA.routes.find(x => x.id === active);
+  if (r) map.fitBounds(L.latLngBounds(r.stops.map(s => [s.lat, s.lng])), { padding: [40, 40], maxZoom: 14 });
+}
+
+function renderLists() {
+  $("#legend").innerHTML = DATA.routes.map(r =>
+    `<button class="chip" type="button" data-id="${r.id}" style="--c:${r.color}"><i></i>${esc(r.name)}</button>`).join("");
+  $("#legend").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) showOnly(b.dataset.id); });
+
+  $("#routes").innerHTML = DATA.routes.map(r => {
+    const first = r.stops[0].times;
+    const arr = first.map((_, i) => fmt(arriveAt(r, i)));
+    const stops = r.stops.map(s => `<li><span>${esc(s.name)}${s.approx ? " <em>위치 근사</em>" : ""}${s.place ? `<em>${esc(s.place)}</em>` : ""}</span><time>${s.times.join(" · ")}</time></li>`).join("");
+    const bt = r.back.times.length ? `하교 학교 출발 ${r.back.times.join(" · ")}${r.back.fri ? ` (금 ${r.back.fri.join(" · ")})` : ""}. ` : "";
+    return `<details class="rt" style="--c:${r.color}"><summary><i></i>${esc(r.name)}<span>등교 ${first.join(" · ")}<br>소요 ${Math.floor(r.minutes / 60)}시간${r.minutes % 60 ? " " + r.minutes % 60 + "분" : ""}</span></summary>
+      <ol class="line">${stops}<li class="school"><span>세명대 문화관 앞 도착<em>${r.arrive ? "학교 공지 시각" : "예상 (출발 + 소요시간)"}</em></span><time>${arr.join(" · ")}</time></li></ol>
+      <p class="note">${esc(bt + r.back.note)}</p></details>`;
+  }).join("");
+
+  const ic = DATA.intercity;
+  $("#intercity").innerHTML = `<p class="note">${esc(ic.operator)} · 동서울종합터미널 ↔ 세명학사 앞 정류장. ${esc(ic.fare)}</p>
+    <div class="tbl"><table><tr><th>방향</th><th>요일</th><th>출발</th></tr>
+    <tr><td>동서울 → 세명대</td><td>일~목</td><td>${ic.to_campus.sun_thu.join(" · ")}</td></tr>
+    <tr><td></td><td>금·토</td><td>${ic.to_campus.fri_sat.join(" · ")}</td></tr>
+    <tr><td>세명대 → 동서울</td><td>월~금</td><td>${ic.to_seoul.mon_fri.join(" · ")}</td></tr>
+    <tr><td></td><td>토</td><td>${ic.to_seoul.sat.join(" · ")}</td></tr></table></div>
+    <p class="note" style="margin-top:8px">세명대행은 공휴일 포함 매일, 동서울행은 일요일·공휴일 운행하지 않아요.</p>`;
+
+  $("#fares").innerHTML = `<tr><th>지역</th><th>통학증 1일</th><th>주 5일 월(20일)</th><th>편도</th></tr>` +
+    Object.values(DATA.fares).map(f => `<tr><td>${esc(f.label)}</td><td>${won(f.day)}</td><td>${won(f.month)}</td><td>${won(f.oneway)}</td></tr>`).join("");
+  $("#contacts").innerHTML = `<tr><th>문의</th><th>운행업체</th><th>전화</th></tr>` +
+    DATA.contacts.map(c => `<tr><td>${esc(c.area)}</td><td>${esc(c.name)}</td><td class="tel">${esc(c.tel)}</td></tr>`).join("");
+  $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`;
+}
+
+function renderToday() {
+  const d = new Date(), el = $("#today");
+  if (isWeekday(d)) el.textContent = `오늘(${DAYS[d.getDay()]}) 운행일 · 공휴일·방학이면 운행 안 함`;
+  else { el.classList.add("off"); el.textContent = `오늘(${DAYS[d.getDay()]})은 운행하지 않아요`; }
+}
+
+fetch("shuttle.json").then(r => r.json()).then(d => {
+  DATA = d;
+  renderToday(); renderLists(); drawMap();
+  $("#locate").addEventListener("click", locate);
+  $("#pick").addEventListener("click", togglePick);
+  setInterval(renderResults, 60000);
+}).catch(() => { $("#msg").className = "msg err"; $("#msg").textContent = "노선 자료를 불러오지 못했어요. 새로고침해 주세요."; });
+</script>
+</body>
+</html>
