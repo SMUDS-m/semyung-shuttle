@@ -11,7 +11,6 @@
 <meta property="og:url" content="https://smuds-m.github.io/semyung-shuttle/">
 <meta name="theme-color" content="#173f7a">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 /* 노선도 = 지하철 노선도 문법: 흰 바탕, 굵은 색 선, 정류장은 흰 속 원 */
 :root{
@@ -44,10 +43,14 @@ button{font:inherit;cursor:pointer;border:0}
 .msg{margin:10px 0 0;font-size:14px;color:var(--sub);line-height:1.5}
 .msg.err{color:var(--miss)}
 #map{height:min(62vh,460px);border-radius:16px;border:1px solid var(--line);overflow:hidden;background:var(--soft)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}}
-:root[data-theme="dark"] .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}
-.leaflet-popup-content{font-family:inherit;font-size:13px;line-height:1.5;margin:10px 12px}
-.leaflet-popup-content b{font-size:14px}
+#map .maperr{height:100%;display:grid;place-items:center;padding:20px;text-align:center;color:var(--sub);font-size:14px;line-height:1.6}
+.stop{width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid var(--c);padding:0;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.pop{position:relative;background:#fff;color:#14213a;border-radius:12px;padding:10px 30px 10px 12px;font-size:13px;line-height:1.5;
+  box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:260px;white-space:normal}
+.pop b{font-size:14px}
+.pop a{color:#173f7a;font-weight:700}
+.pop .x{position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:6px;background:transparent;font-size:16px;color:#5d6b82}
+.pop::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-bottom:0;border-top-color:#fff}
 .legend{display:flex;flex-wrap:wrap;gap:6px}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;border:1px solid var(--line);
   background:var(--card);color:var(--ink);font-size:13px;font-weight:700}
@@ -89,6 +92,24 @@ table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:
 th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
 th{font-size:12px;color:var(--sub)}
 .tel{font-variant-numeric:tabular-nums;user-select:all;font-weight:700}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--soft);padding:4px;border-radius:12px}
+.seg button{padding:10px 6px;border-radius:9px;background:transparent;color:var(--sub);font-weight:800;font-size:14px}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:var(--card);color:var(--brand);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg.small button{padding:7px 10px;font-size:13px}
+.trctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+.trctl .seg{flex:0 0 auto}
+.sel{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);font-weight:700}
+.sel select{font:inherit;font-size:14px;font-weight:700;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:9px;padding:7px 8px}
+.tt td,.tt th{padding:7px 6px}
+.tt tr.past td{color:var(--sub);opacity:.55}
+.tt tr.next td{background:var(--soft);font-weight:800}
+.tt tr.next td:first-child{box-shadow:inset 4px 0 0 var(--brand)}
+.kind{font-size:12px;font-weight:800;padding:2px 6px;border-radius:6px;background:var(--soft);color:var(--brand)}
+.kind.ktx{background:var(--brand);color:var(--brand-ink)}
+.hub{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:6px;margin-top:10px}
+.hub h3{margin:0;font-size:15px}
+.hub p{margin:0;font-size:13.5px;line-height:1.55}
+.sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
 footer{font-size:12.5px;color:var(--sub);line-height:1.6}
 footer a{color:var(--brand)}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#2f6fed;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,237,.25)}
@@ -125,9 +146,23 @@ footer a{color:var(--brand)}
   <div id="routes"></div>
 </section>
 
-<section class="card" aria-labelledby="h-ic">
-  <h2 id="h-ic">동서울 직통 시외버스</h2>
-  <div id="intercity"></div>
+<section class="card" aria-labelledby="h-tr">
+  <h2 id="h-tr">다른 교통편</h2>
+  <p class="note">통학버스가 없는 시간·지역이라면 기차나 시외버스로 제천까지 온 뒤 시내버스·택시로 학교에 오면 돼요.</p>
+  <div class="seg" role="tablist" id="trTabs">
+    <button type="button" role="tab" data-tab="train" aria-selected="true">🚄 기차</button>
+    <button type="button" role="tab" data-tab="bus" aria-selected="false">🚌 시외버스</button>
+    <button type="button" role="tab" data-tab="city" aria-selected="false">🚏 시내버스·택시</button>
+  </div>
+  <div class="trctl" id="trCtl">
+    <div class="seg small" id="trDir">
+      <button type="button" data-dir="to_jecheon" aria-pressed="true">제천으로</button>
+      <button type="button" data-dir="from_jecheon" aria-pressed="false">제천에서</button>
+    </div>
+    <label class="sel"><span id="trFromLabel">출발</span>
+      <select id="trFrom"></select></label>
+  </div>
+  <div id="trBody" aria-live="polite"></div>
 </section>
 
 <section class="card" aria-labelledby="h-fare">
@@ -145,11 +180,11 @@ footer a{color:var(--brand)}
 </footer>
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
+const KAKAO_JS_KEY = "f27e2da08431ef8d983a83fccfcf1eb7";
 const WALK_M_PER_MIN = 67, DETOUR = 1.3, WALK_LIMIT_KM = 3;
 const DAYS = ["일","월","화","수","목","금","토"];
-let DATA, map, me = null, meMarker = null, picking = false, active = null;
+let DATA, map, me = null, meMarker = null, picking = false, active = null, pop = null;
 const layers = {};
 
 const $ = s => document.querySelector(s);
@@ -262,8 +297,7 @@ function renderResults() {
       <div class="links">${kakaoLinks(x.s)}</div>
     </article>`;
   }).join("");
-  const b = L.latLngBounds([[me.lat, me.lng], ...list.map(x => [x.s.lat, x.s.lng])]);
-  map.fitBounds(b, { padding: [40, 40], maxZoom: 16 });
+  fit([[me.lat, me.lng], ...list.map(x => [x.s.lat, x.s.lng])], 40, 3);
   const far = list[0].k > 30;
   $("#msg").className = "msg";
   $("#msg").textContent = far
@@ -273,9 +307,12 @@ function renderResults() {
 
 function setMe(lat, lng, label) {
   me = { lat, lng };
-  if (meMarker) meMarker.remove();
-  meMarker = L.marker([lat, lng], { icon: L.divIcon({ className: "", html: '<div class="dot-me"></div>', iconSize: [16, 16] }), zIndexOffset: 1000 })
-    .addTo(map).bindTooltip(label);
+  if (tr.tab === "city") renderTransit();
+  if (meMarker) meMarker.setMap(null);
+  const el = document.createElement("div");
+  el.className = "dot-me"; el.title = label;
+  meMarker = new kakao.maps.CustomOverlay({ position: ll(lat, lng), content: el, zIndex: 10 });
+  meMarker.setMap(map);
   renderResults();
 }
 
@@ -298,43 +335,70 @@ function togglePick() {
   picking = !picking;
   $("#pick").classList.toggle("on", picking);
   $("#pick").setAttribute("aria-pressed", picking);
-  map.getContainer().style.cursor = picking ? "crosshair" : "";
+  map.setCursor(picking ? "crosshair" : "");
   if (picking) { $("#msg").className = "msg"; $("#msg").textContent = "지도에서 출발할 곳을 눌러 주세요."; }
 }
 
 function stopPopup(r, s) {
   const trips = s.times.map((t, i) => `${s.times.length > 1 ? i + 1 + "호차 " : ""}${t}`).join(" · ");
-  return `<b>${esc(s.name)}</b><br>${s.place ? esc(s.place) + "<br>" : ""}<span style="color:${r.color};font-weight:700">${esc(r.name)}</span> 등교 ${trips}<br><a href="https://map.kakao.com/link/map/${encodeURIComponent(s.place || s.name)},${s.lat},${s.lng}" target="_blank" rel="noopener">카카오맵에서 보기</a>`;
+  return `<b>${esc(s.name)}</b><br>${s.place ? esc(s.place) + "<br>" : ""}<span style="color:${r.color};font-weight:800">${esc(r.name)}</span> 등교 ${trips}<br><a href="https://map.kakao.com/link/map/${encodeURIComponent(s.place || s.name)},${s.lat},${s.lng}" target="_blank" rel="noopener">카카오맵에서 보기</a>`;
+}
+
+const ll = (lat, lng) => new kakao.maps.LatLng(lat, lng);
+function fit(points, pad, minLevel) {
+  const b = new kakao.maps.LatLngBounds();
+  points.forEach(p => b.extend(ll(p[0], p[1])));
+  map.setBounds(b, pad, pad, pad, pad);
+  if (minLevel && map.getLevel() < minLevel) map.setLevel(minLevel);
+}
+
+function openPop(lat, lng, html) {
+  if (pop) pop.setMap(null);
+  const el = document.createElement("div");
+  el.className = "pop";
+  el.innerHTML = html + '<button class="x" type="button" aria-label="닫기">×</button>';
+  el.querySelector(".x").addEventListener("click", () => pop.setMap(null));
+  pop = new kakao.maps.CustomOverlay({ position: ll(lat, lng), content: el, yAnchor: 1.18, zIndex: 20 });
+  pop.setMap(map);
 }
 
 function drawMap() {
-  map = L.map("map", { zoomControl: true, scrollWheelZoom: false });
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
+  map = new kakao.maps.Map($("#map"), { center: ll(37.3, 127.6), level: 11 });
+  map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
   const campus = DATA.campus.board;
-  L.marker([campus.lat, campus.lng], { icon: L.divIcon({ className: "", html: '<div class="campus">세명</div>', iconSize: [30, 30] }), zIndexOffset: 900 })
-    .addTo(map).bindPopup(`<b>세명대학교 ${esc(campus.name)}</b><br>${esc(campus.desc)}`);
+  const c = document.createElement("button");
+  c.type = "button"; c.className = "campus"; c.textContent = "세명";
+  c.addEventListener("click", () => openPop(campus.lat, campus.lng, `<b>세명대학교 ${esc(campus.name)}</b><br>${esc(campus.desc)}`));
+  new kakao.maps.CustomOverlay({ position: ll(campus.lat, campus.lng), content: c, zIndex: 5 }).setMap(map);
   DATA.routes.forEach(r => {
-    const g = L.layerGroup();
-    const pts = r.stops.map(s => [s.lat, s.lng]);
-    L.polyline(pts, { color: r.color, weight: 6, opacity: .9 }).addTo(g);
-    L.polyline([pts[pts.length - 1], [campus.lat, campus.lng]], { color: r.color, weight: 3, opacity: .55, dashArray: "6 8" }).addTo(g);
-    r.stops.forEach(s => L.circleMarker([s.lat, s.lng], { radius: 6, color: r.color, weight: 3, fillColor: "#fff", fillOpacity: 1 })
-      .bindPopup(stopPopup(r, s)).addTo(g));
-    g.addTo(map); layers[r.id] = g;
+    const items = [];
+    const path = r.stops.map(s => ll(s.lat, s.lng));
+    items.push(new kakao.maps.Polyline({ path, strokeWeight: 6, strokeColor: r.color, strokeOpacity: .9 }));
+    items.push(new kakao.maps.Polyline({ path: [path[path.length - 1], ll(campus.lat, campus.lng)], strokeWeight: 3,
+      strokeColor: r.color, strokeOpacity: .55, strokeStyle: "dash" }));
+    r.stops.forEach(s => {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "stop"; b.style.setProperty("--c", r.color);
+      b.setAttribute("aria-label", `${r.name} ${s.name}`);
+      b.addEventListener("click", () => openPop(s.lat, s.lng, stopPopup(r, s)));
+      items.push(new kakao.maps.CustomOverlay({ position: ll(s.lat, s.lng), content: b, zIndex: 3 }));
+    });
+    items.forEach(i => i.setMap(map));
+    layers[r.id] = items;
   });
-  map.fitBounds(L.latLngBounds(DATA.routes.flatMap(r => r.stops.map(s => [s.lat, s.lng])).concat([[campus.lat, campus.lng]])), { padding: [20, 20] });
-  map.on("click", e => { if (picking) { togglePick(); setMe(e.latlng.lat, e.latlng.lng, "고른 위치"); } });
-  map.on("focus", () => map.scrollWheelZoom.enable());
+  fit(DATA.routes.flatMap(r => r.stops.map(s => [s.lat, s.lng])).concat([[campus.lat, campus.lng]]), 20);
+  kakao.maps.event.addListener(map, "click", e => {
+    if (picking) { togglePick(); setMe(e.latLng.getLat(), e.latLng.getLng(), "고른 위치"); }
+  });
 }
 
 function showOnly(id) {
   active = active === id ? null : id;
-  DATA.routes.forEach(r => { const on = !active || active === r.id; on ? layers[r.id].addTo(map) : layers[r.id].remove(); });
+  if (pop) pop.setMap(null);
+  DATA.routes.forEach(r => layers[r.id].forEach(i => i.setMap(!active || active === r.id ? map : null)));
   document.querySelectorAll(".chip").forEach(c => c.classList.toggle("on", c.dataset.id === active));
   const r = DATA.routes.find(x => x.id === active);
-  if (r) map.fitBounds(L.latLngBounds(r.stops.map(s => [s.lat, s.lng])), { padding: [40, 40], maxZoom: 14 });
+  if (r) fit(r.stops.map(s => [s.lat, s.lng]), 40, 4);
 }
 
 function renderLists() {
@@ -352,20 +416,71 @@ function renderLists() {
       <p class="note">${esc(bt + r.back.note)}</p></details>`;
   }).join("");
 
-  const ic = DATA.intercity;
-  $("#intercity").innerHTML = `<p class="note">${esc(ic.operator)} · 동서울종합터미널 ↔ 세명학사 앞 정류장. ${esc(ic.fare)}</p>
-    <div class="tbl"><table><tr><th>방향</th><th>요일</th><th>출발</th></tr>
-    <tr><td>동서울 → 세명대</td><td>일~목</td><td>${ic.to_campus.sun_thu.join(" · ")}</td></tr>
-    <tr><td></td><td>금·토</td><td>${ic.to_campus.fri_sat.join(" · ")}</td></tr>
-    <tr><td>세명대 → 동서울</td><td>월~금</td><td>${ic.to_seoul.mon_fri.join(" · ")}</td></tr>
-    <tr><td></td><td>토</td><td>${ic.to_seoul.sat.join(" · ")}</td></tr></table></div>
-    <p class="note" style="margin-top:8px">세명대행은 공휴일 포함 매일, 동서울행은 일요일·공휴일 운행하지 않아요.</p>`;
-
   $("#fares").innerHTML = `<tr><th>지역</th><th>통학증 1일</th><th>주 5일 월(20일)</th><th>편도</th></tr>` +
     Object.values(DATA.fares).map(f => `<tr><td>${esc(f.label)}</td><td>${won(f.day)}</td><td>${won(f.month)}</td><td>${won(f.oneway)}</td></tr>`).join("");
   $("#contacts").innerHTML = `<tr><th>문의</th><th>운행업체</th><th>전화</th></tr>` +
     DATA.contacts.map(c => `<tr><td>${esc(c.area)}</td><td>${esc(c.name)}</td><td class="tel">${esc(c.tel)}</td></tr>`).join("");
   $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`;
+}
+
+// ---- 다른 교통편 ----
+const tr = { tab: "train", dir: "to_jecheon", from: null };
+const CAMPUS_NAME = "세명대학교";
+const kakaoBy = (mode, a, b) => `https://map.kakao.com/link/by/${mode}/${encodeURIComponent(a.name)},${a.lat},${a.lng}/${encodeURIComponent(b.name)},${b.lat},${b.lng}`;
+const durText = d => { const [h, m] = d.split(":").map(Number); return (h ? h + "시간 " : "") + (m ? m + "분" : "").trim(); };
+
+function hubBox(hub, label) {
+  const campus = { name: CAMPUS_NAME, lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
+  const k = km(hub, campus) * DETOUR;
+  return `<div class="hub"><h3>${esc(hub.name)} → 세명대 (${label})</h3>
+    <p>🚏 시내버스 ${esc(hub.bus)}</p>
+    <p>🚕 택시 도로 약 ${k.toFixed(0)}km · ${Math.round(k / 30 * 60)}분 안팎 (시속 30km 어림값)</p>
+    <div class="links"><a href="${kakaoBy("traffic", hub, campus)}" target="_blank" rel="noopener">대중교통 길찾기</a><a href="${kakaoBy("car", hub, campus)}" target="_blank" rel="noopener">자동차 길찾기</a></div></div>`;
+}
+
+function renderTransit() {
+  const T = DATA.transit;
+  document.querySelectorAll("#trTabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === tr.tab));
+  document.querySelectorAll("#trDir button").forEach(b => b.setAttribute("aria-pressed", b.dataset.dir === tr.dir));
+  $("#trCtl").hidden = tr.tab === "city";
+  if (tr.tab === "city") {
+    const campus = { name: CAMPUS_NAME, lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
+    $("#trBody").innerHTML = `<p class="sum">학교 앞 정류장: <b>${esc(T.campus_stops)}</b><br>지나는 시내버스: ${T.citybus_routes.map(n => `<span class="kind">${esc(n)}</span>`).join(" ")}</p>
+      <p class="note">시내버스 시간표는 공개된 자료가 없어 실시간 도착 정보가 있는 카카오맵 길찾기로 연결해요.</p>
+      ${hubBox(T.hubs.station, "기차로 왔을 때")}${hubBox(T.hubs.terminal, "시외버스로 왔을 때")}
+      <div class="hub"><h3>지금 있는 곳 → 세명대</h3><p>${me ? "찾은 내 위치에서 출발하는 대중교통 길을 보여 줘요." : "위에서 '내 위치로 찾기'를 하면 내 위치에서 출발해요. 아니면 카카오맵에서 출발지를 직접 고르세요."}</p>
+      <div class="links"><a href="${me ? kakaoBy("traffic", { name: "내 위치", ...me }, campus) : `https://map.kakao.com/link/to/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`}" target="_blank" rel="noopener">대중교통 길찾기</a></div></div>`;
+    return;
+  }
+  const list = tr.tab === "train" ? T.train : T.bus;
+  if (!list.some(x => x.from === tr.from)) tr.from = list[0].from;
+  $("#trFromLabel").textContent = tr.dir === "to_jecheon" ? "출발" : "도착";
+  $("#trFrom").innerHTML = list.map(x => `<option value="${esc(x.from)}"${x.from === tr.from ? " selected" : ""}>${esc(x.from)}${tr.tab === "train" ? "역" : ""}</option>`).join("");
+  const item = list.find(x => x.from === tr.from), rows = item[tr.dir];
+  const hubName = tr.tab === "train" ? "제천역" : "제천버스터미널";
+  const fromName = tr.tab === "train" ? item.from + "역" : item.terminal;
+  const [a, b] = tr.dir === "to_jecheon" ? [fromName, hubName] : [hubName, fromName];
+  const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+  const next = rows.findIndex(r => toMin(r.dep) >= nowMin);
+  const fares = rows.map(r => r.fare);
+  const body = rows.length ? `<div class="tbl"><table class="tt"><tr><th>출발</th><th>도착</th><th>${tr.tab === "train" ? "열차" : "등급"}</th><th>소요</th><th>요금</th></tr>` +
+    rows.map((r, i) => `<tr class="${i < next || next < 0 ? "past" : i === next ? "next" : ""}"><td>${r.dep}</td><td>${r.arr}</td><td><span class="kind${/KTX/.test(r.kind) ? " ktx" : ""}">${esc(r.kind)}${r.no ? " " + esc(r.no) : ""}</span></td><td>${durText(r.dur)}</td><td>${won(r.fare)}</td></tr>`).join("") +
+    `</table></div>` : `<p class="note">이 방향 운행 정보가 없어요.</p>`;
+  const label = r => `<b>${r.dep}</b> (${r.kind}${r.no ? " " + r.no : ""})`;
+  const nextText = !rows.length ? "운행 정보 없음" : next >= 0 ? `다음 출발 ${label(rows[next])}` : `오늘 남은 차편이 없어요 · 내일 첫차 ${label(rows[0])}`;
+  $("#trBody").innerHTML = `<p class="sum">${esc(a)} → ${esc(b)} · 하루 ${rows.length}회 · ${nextText}${fares.length ? `<br>요금(어른) ${won(Math.min(...fares))}${Math.max(...fares) > Math.min(...fares) ? " ~ " + won(Math.max(...fares)) : ""}` : ""}</p>${body}
+    ${tr.dir === "to_jecheon" ? hubBox(T.hubs[tr.tab === "train" ? "station" : "terminal"], "도착 후") : ""}
+    ${tr.tab === "bus" ? `<div class="hub"><h3>동서울 ↔ 세명대 직통 (세명학사 앞 정류장)</h3><p>${esc(DATA.intercity.operator)} · ${esc(DATA.intercity.fare)}</p>
+      <p>동서울 → 세명대: 일~목 ${DATA.intercity.to_campus.sun_thu.join(" · ")} / 금·토 ${DATA.intercity.to_campus.fri_sat.join(" · ")} (공휴일 포함 매일)</p>
+      <p>세명대 → 동서울: 월~금 ${DATA.intercity.to_seoul.mon_fri.join(" · ")} / 토 ${DATA.intercity.to_seoul.sat.join(" · ")} (일요일·공휴일 미운행)</p></div>` : ""}
+    <p class="note" style="margin-top:10px">${esc(T.source.split(" · ")[0])}, ${esc(T.fetched)} 기준. 예매·변경은 ${tr.tab === "train" ? '<a href="https://www.letskorail.com" target="_blank" rel="noopener">코레일</a>' : '<a href="https://txbus.t-money.co.kr" target="_blank" rel="noopener">티머니 시외버스</a>·<a href="https://www.bustago.or.kr" target="_blank" rel="noopener">버스타고</a>'}에서 확인하세요.</p>`;
+}
+
+function bindTransit() {
+  $("#trTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { tr.tab = b.dataset.tab; renderTransit(); } });
+  $("#trDir").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { tr.dir = b.dataset.dir; renderTransit(); } });
+  $("#trFrom").addEventListener("change", e => { tr.from = e.target.value; renderTransit(); });
+  renderTransit();
 }
 
 function renderToday() {
@@ -374,9 +489,25 @@ function renderToday() {
   else { el.classList.add("off"); el.textContent = `오늘(${DAYS[d.getDay()]})은 운행하지 않아요`; }
 }
 
-fetch("shuttle.json").then(r => r.json()).then(d => {
+function loadKakao() {
+  return new Promise((ok, fail) => {
+    const s = document.createElement("script");
+    s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false`;
+    s.onload = () => window.kakao && kakao.maps ? kakao.maps.load(ok) : fail();
+    s.onerror = fail;
+    document.head.appendChild(s);
+  });
+}
+
+fetch("shuttle.json").then(r => r.json()).then(async d => {
   DATA = d;
-  renderToday(); renderLists(); drawMap();
+  renderToday(); renderLists(); bindTransit();
+  try { await loadKakao(); } catch {
+    $("#map").innerHTML = '<div class="maperr">카카오맵을 불러오지 못했어요. 새로고침해 보세요.<br>아래 시간표와 정류장 위치 링크는 그대로 쓸 수 있어요.</div>';
+    $("#locate").disabled = $("#pick").disabled = true;
+    return;
+  }
+  drawMap();
   $("#locate").addEventListener("click", locate);
   $("#pick").addEventListener("click", togglePick);
   setInterval(renderResults, 60000);

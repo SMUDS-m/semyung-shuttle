@@ -28,8 +28,12 @@ def main():
         item = {k: v for k, v in r.items() if k not in ("stops", "city")}
         item["stops"] = out
         routes.append(item)
-    data = {k: v for k, v in meta.items() if k not in ("routes", "_source")}
+    data = {k: v for k, v in meta.items() if k not in ("routes", "_source", "transit")}
     data.update(routes=routes, source=meta["_source"], built=date.today().isoformat())
+    transit = ROOT / "data" / "transit.json"
+    if transit.exists():
+        data["transit"] = json.loads(transit.read_text())
+        data["transit"].update(meta["transit"])
     (ROOT / "docs" / "shuttle.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     n = sum(len(r["stops"]) for r in routes)
     print(f"노선 {len(routes)}개, 정류장 {n}곳 → docs/shuttle.json")
