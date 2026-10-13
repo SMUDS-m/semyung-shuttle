@@ -257,12 +257,6 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
     <div id="routes"></div>
   </section>
 
-  <section class="card" aria-labelledby="h-fare">
-    <h2 id="h-fare">요금과 문의</h2>
-    <div class="tbl"><table id="fares"></table></div>
-    <p class="note" style="margin-top:10px">통학증(월 정기권)은 학생회관 201호 학생처에서 방문 발급. 편도는 월요일 등교·금요일 하교만, 해당 주 월~목 사전예약.</p>
-    <div class="tbl"><table id="contacts"></table></div>
-  </section>
 </div>
 
 <div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" hidden>
@@ -622,10 +616,6 @@ function renderLists() {
       <p class="note">${esc(bt + r.back.note)}</p></details>`;
   }).join("");
 
-  $("#fares").innerHTML = `<tr><th>지역</th><th>통학증 1일</th><th>주 5일 월(20일)</th><th>편도</th></tr>` +
-    Object.values(DATA.fares).map(f => `<tr><td>${esc(f.label)}</td><td>${won(f.day)}</td><td>${won(f.month)}</td><td>${won(f.oneway)}</td></tr>`).join("");
-  $("#contacts").innerHTML = `<tr><th>문의</th><th>운행업체</th><th>전화</th></tr>` +
-    DATA.contacts.map(c => `<tr><td>${esc(c.area)}</td><td>${esc(c.name)}</td><td class="tel">${esc(c.tel)}</td></tr>`).join("");
   $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`;
 }
 
