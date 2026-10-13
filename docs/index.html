@@ -110,6 +110,22 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
+.plan{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.plan h3{margin:0;font-size:16px}
+.opt{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:8px}
+.opt .head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.opt .head b{font-size:17px;font-variant-numeric:tabular-nums}
+.opt .head span{font-size:13px;color:var(--sub);font-weight:700}
+.legs{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.legs li{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed var(--line);font-size:13.5px;line-height:1.45}
+.legs li:first-child{border-top:0}
+.legs li i{font-style:normal;font-size:17px;text-align:center}
+.legs li small{display:block;color:var(--sub);font-size:12px}
+.legs li time{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;white-space:nowrap}
+.legs .no{display:inline-block;font-weight:800;font-size:12px;padding:1px 6px;border-radius:6px;color:#fff;background:var(--lc,#3d6fd1);margin:0 4px 2px 0}
+.legs .no+.no{margin-left:0}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
 footer{font-size:12.5px;color:var(--sub);line-height:1.6}
 footer a{color:var(--brand)}
 .dot-me{width:16px;height:16px;border-radius:50%;background:#2f6fed;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,237,.25)}
@@ -135,6 +151,12 @@ footer a{color:var(--brand)}
   </div>
   <p class="msg" id="msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
   <div class="results" id="results" aria-live="polite"></div>
+  <div class="plan" id="plan" hidden>
+    <h3>🧭 세명대까지 대중교통 길찾기</h3>
+    <p class="note" id="planNote">셔틀 대신 버스·지하철·기차로 가는 정확한 경로와 시간을 찾아요.</p>
+    <button class="btn ghost" id="planBtn" type="button">경로 찾기</button>
+    <div id="planOut" aria-live="polite"></div>
+  </div>
 </section>
 
 <div id="map" role="region" aria-label="통학버스 노선 지도"></div>
@@ -307,6 +329,8 @@ function renderResults() {
 
 function setMe(lat, lng, label) {
   me = { lat, lng };
+  $("#plan").hidden = false;
+  $("#planOut").innerHTML = "";
   if (tr.tab === "city") renderTransit();
   if (meMarker) meMarker.setMap(null);
   const el = document.createElement("div");
@@ -483,6 +507,142 @@ function bindTransit() {
   renderTransit();
 }
 
+// ---- 대중교통 길찾기 (ODsay) ----
+const ODSAY_KEY = "bJCBwysNQk8tNXqwvDETAg";
+const ODSAY = "https://api.odsay.com/v1/api/";
+const ICON = { 1: "🚇", 2: "🚌", 3: "🚶", 4: "🚄", 5: "🚌", 6: "🚌", 7: "✈️" };
+const KIND = { 4: "기차", 5: "고속버스", 6: "시외버스", 7: "항공" };
+const odCache = new Map();
+
+// ODsay 는 동시 호출을 거절하므로 한 번에 하나씩 보낸다.
+let odQueue = Promise.resolve();
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function odsay(api, params) {
+  const q = new URLSearchParams({ ...params, apiKey: ODSAY_KEY });
+  const key = api + "?" + q;
+  if (!odCache.has(key)) {
+    const job = odQueue.then(async () => {
+      for (let tryNo = 0; ; tryNo++) {
+        const res = await fetch(ODSAY + api + "?" + q).then(r => r.json());
+        if (!res.error) return res.result;
+        const e = Array.isArray(res.error) ? res.error[0] : res.error;
+        if (tryNo >= 1) throw Object.assign(new Error(e.message || e.msg || "길찾기 오류"), { code: String(e.code) });
+        await wait(600);
+      }
+    });
+    odQueue = job.catch(() => {}).then(() => wait(150));
+    job.catch(() => odCache.delete(key));
+    odCache.set(key, job);
+  }
+  return odCache.get(key);
+}
+
+// 같은 도시 안 경로. 700m 이내 등으로 실패하면 걷기로 대신한다.
+async function cityPath(a, b) {
+  const r4 = v => Math.round(v * 1e4) / 1e4;
+  try {
+    const r = await odsay("searchPubTransPathT", { SX: r4(a.lng), SY: r4(a.lat), EX: r4(b.lng), EY: r4(b.lat), SearchType: 0 });
+    if (r.searchType === 0 && r.path?.length) return r.path[0];
+  } catch (e) { /* 700m 이내 등 */ }
+  const m = Math.round(km(a, b) * DETOUR * 1000);
+  if (m > 2000) {  // 검색 실패 + 걷기엔 멂 → 택시 어림
+    const min = Math.round(m / 1000 / 30 * 60) + 3;
+    return { info: { totalTime: min, payment: 0, totalWalk: 0 }, subPath: [{ trafficType: 0, sectionTime: min, distance: m }] };
+  }
+  return { info: { totalTime: Math.ceil(m / WALK_M_PER_MIN), payment: 0, totalWalk: m }, subPath: [{ trafficType: 3, sectionTime: Math.ceil(m / WALK_M_PER_MIN), distance: m }] };
+}
+
+function legLines(path, startMin) {
+  let t = startMin;
+  return path.subPath.filter(s => s.sectionTime > 0 || s.trafficType !== 3).map(s => {
+    const from = fmt(t); t += s.sectionTime || 0;
+    if (s.trafficType === 0) return `<li><i>🚕</i><span>택시 ${distText(s.distance / 1000)}<small>버스 경로를 못 찾아 택시 어림값으로 넣었어요</small></span><time>${s.sectionTime}분</time></li>`;
+    if (s.trafficType === 3) return `<li><i>🚶</i><span>걷기 ${s.distance ? distText(s.distance / 1000) : ""}</span><time>${s.sectionTime}분</time></li>`;
+    const lanes = (s.lane || []).map(l => l.busNo || l.name).filter(Boolean);
+    const nums = [...new Set(lanes.map(n => n.split("(")[0]))].slice(0, 4)
+      .map(n => `<span class="no" style="--lc:${s.trafficType === 1 ? "#2b8a3e" : "#3d6fd1"}">${esc(n)}</span>`).join(" ") + " ";
+    return `<li><i>${ICON[s.trafficType]}</i><span>${nums}${esc(s.startName)} → ${esc(s.endName)}<small>${s.stationCount ? s.stationCount + "개 정류장 · " : ""}${from} 무렵 탑승</small></span><time>${s.sectionTime}분</time></li>`;
+  }).join("");
+}
+
+// 기차·고속·시외버스 시각표: [{dep, arr, name, fare}]
+async function serviceTimes(s) {
+  const ids = { startStationID: s.startID, endStationID: s.endID };
+  if (s.trafficType === 4) {
+    const r = await odsay("trainServiceTime", ids);
+    return (r.station || []).map(x => ({ dep: x.departureTime, arr: x.arrivalTime, name: `${x.trainClass} ${x.trainNo}`, fare: +x.fare?.general || s.payment }))
+      .sort((a, b) => toMin(a.dep) - toMin(b.dep));
+  }
+  const r = await odsay(s.trafficType === 5 ? "expressServiceTime" : "intercityServiceTime", ids);
+  const out = [];
+  (r.station || []).forEach(x => {
+    const waste = +x.wasteTime || s.sectionTime;
+    (x.schedule || "").split(",").map(v => v.trim()).filter(v => /^\d\d:\d\d$/.test(v)).forEach(dep =>
+      out.push({ dep, arr: fmt(toMin(dep) + waste), name: KIND[s.trafficType], fare: +x.normalFare || s.payment }));
+  });
+  return out.sort((a, b) => toMin(a.dep) - toMin(b.dep));
+}
+
+async function planIntercity(origin, leg, campus, nowMin) {
+  const st = { lat: leg.startY, lng: leg.startX }, en = { lat: leg.endY, lng: leg.endX };
+  const [first, times, last] = await Promise.all([cityPath(origin, st), serviceTimes(leg).catch(() => []), cityPath(en, campus)]);
+  const ready = nowMin + first.info.totalTime + 10;  // 역·터미널에서 10분 여유
+  let i = times.findIndex(x => toMin(x.dep) >= ready), tomorrow = false;
+  if (i < 0 && times.length) { i = 0; tomorrow = true; }
+  const run = times[i];
+  const dep = run ? toMin(run.dep) : ready;
+  const arrHub = run ? toMin(run.arr) + (toMin(run.arr) < dep ? 1440 : 0) : dep + leg.sectionTime;
+  const arrive = arrHub + last.info.totalTime + 5;
+  const leave = dep - first.info.totalTime - 10;
+  const fare = (first.info.payment || 0) + (run?.fare || leg.payment || 0) + (last.info.payment || 0);
+  const later = run ? times.slice(i + 1, i + 3).map(x => x.dep) : [];
+  return {
+    total: arrive - leave, arrive, leave, fare, tomorrow,
+    html: `<div class="opt"><div class="head"><b>${tomorrow ? "내일 " : ""}${fmt(leave)} 출발 → ${fmt(arrive)} 도착</b><span>약 ${durText(fmt(arrive - leave))} · ${won(fare)}</span></div>
+      <ol class="legs">${legLines(first, leave)}
+      <li><i>${ICON[leg.trafficType]}</i><span><span class="no" style="--lc:#173f7a">${esc(run?.name || KIND[leg.trafficType])}</span> ${esc(leg.startName)} → ${esc(leg.endName)}<small>${run ? `${run.dep} 출발 · ${run.arr} 도착${later.length ? " · 다음 " + later.join(", ") : ""}` : "시각표 정보 없음 · 예매 사이트에서 확인"}</small></span><time>${run ? run.dep : leg.sectionTime + "분"}</time></li>
+      ${legLines(last, arrHub)}
+      <li><i>🏫</i><span>세명대 도착</span><time>${fmt(arrive)}</time></li></ol></div>`
+  };
+}
+
+async function plan(origin) {
+  const out = $("#planOut"), campus = { lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
+  out.innerHTML = `<p class="note"><span class="spin"></span>경로를 찾는 중이에요…</p>`;
+  const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+  try {
+    const r = await odsay("searchPubTransPathT", { SX: origin.lng, SY: origin.lat, EX: campus.lng, EY: campus.lat });
+    let cards;
+    if (r.searchType === 0) {
+      cards = r.path.slice(0, 3).map(p => {
+        const arrive = nowMin + p.info.totalTime;
+        return `<div class="opt"><div class="head"><b>지금 출발 → ${fmt(arrive)} 무렵 도착</b><span>${p.info.totalTime}분 · ${won(p.info.payment)} · 걷기 ${distText(p.info.totalWalk / 1000)}</span></div><ol class="legs">${legLines(p, nowMin)}</ol></div>`;
+      });
+      const late = nowMin >= 22 * 60 || nowMin < 6 * 60;
+      $("#planNote").textContent = (late ? "⚠️ 지금은 늦은 시간이라 시내버스 막차가 끊겼을 수 있어요. " : "") + "버스를 기다리는 시간은 빠져 있어요. 실시간 도착은 카카오맵에서 확인하세요.";
+    } else {
+      const seen = new Set(), legs = [];
+      for (const p of r.path) {
+        const s = p.subPath.find(x => x.trafficType >= 4 && x.trafficType <= 6);
+        if (!s) continue;
+        const k = s.trafficType + s.startName + s.endName;
+        if (seen.has(k)) continue;
+        seen.add(k); legs.push(s);
+        if (legs.length === 4) break;
+      }
+      const opts = (await Promise.all(legs.map(l => planIntercity(origin, l, campus, nowMin).catch(() => null)))).filter(Boolean);
+      opts.sort((a, b) => (a.tomorrow - b.tomorrow) || (a.arrive - b.arrive));
+      cards = opts.slice(0, 3).map(o => o.html);
+      $("#planNote").textContent = "기차·시외버스는 시각표 기준, 시내 구간은 버스 기다리는 시간이 빠진 어림값이에요. 역·터미널에서 10분 여유를 두었어요.";
+    }
+    const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent("출발지")},${origin.lat},${origin.lng}/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`;
+    out.innerHTML = (cards.length ? cards.join("") : `<p class="note">찾은 경로가 없어요.</p>`) +
+      `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵에서 실시간으로 보기</a></div><p class="note">경로 자료: ODsay 대중교통 API</p>`;
+  } catch (e) {
+    out.innerHTML = `<p class="msg err">경로를 찾지 못했어요 (${esc(e.message)}). 잠시 뒤 다시 누르거나 카카오맵 길찾기를 써 주세요.</p>`;
+  }
+}
+
 function renderToday() {
   const d = new Date(), el = $("#today");
   if (isWeekday(d)) el.textContent = `오늘(${DAYS[d.getDay()]}) 운행일 · 공휴일·방학이면 운행 안 함`;
@@ -510,6 +670,7 @@ fetch("shuttle.json").then(r => r.json()).then(async d => {
   drawMap();
   $("#locate").addEventListener("click", locate);
   $("#pick").addEventListener("click", togglePick);
+  $("#planBtn").addEventListener("click", () => me && plan(me));
   setInterval(renderResults, 60000);
 }).catch(() => { $("#msg").className = "msg err"; $("#msg").textContent = "노선 자료를 불러오지 못했어요. 새로고침해 주세요."; });
 </script>

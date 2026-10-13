@@ -15,6 +15,7 @@
 - [x] ⑤ 정적 데이터 — `scripts/build_web.py` → `docs/shuttle.json`
 - [x] ⑥ 웹 화면 — `docs/index.html` (GitHub Pages)
 - [x] 다른 교통편 — `scripts/fetch_transit.py` → `data/transit.json` (기차 청량리·서울 ↔ 제천역, 시외버스 7개 터미널 ↔ 제천버스터미널)
+- [x] 대중교통 길찾기 — [ODsay](https://lab.odsay.com) API로 출발지 → 세명대 경로(시내 구간 + 기차·시외버스 실제 시각표 + 제천역·터미널 → 학교)
 - [ ] ⑦ 변경 감시
 
 ## 파이프라인
@@ -94,6 +95,8 @@ python3 scripts/build_web.py
 원주·충주 경유지 좌표의 `source`는 `kakao`(장소검색 첫 결과) 또는 `override`(손으로 지정)입니다. `approx: true`는 같은 상호를 찾지 못해 근처 장소로 대신한 좌표입니다(현재 원주 '강원자동차정비기술학원' 1곳).
 
 ## 출처
+
+- 대중교통 길찾기: [ODsay LAB](https://lab.odsay.com) 웹 키(등록 도메인 smuds-m.github.io·localhost에서만 동작)
 
 - 기차·시외버스 시간표: [아사마루 열차](https://train.asamaru.net) · [아사마루 시외버스](https://transportation.asamaru.net) (코레일·시외버스 공공데이터 기반, 수원·대전은 자료가 없어 뺌)
 - 시내버스 경유 노선: [코리아차트 제천 시내버스](https://info.koreacharts.com/citybus/33030/contents.html). 시간표는 공개 자료가 없어 카카오맵 대중교통 길찾기로 연결
