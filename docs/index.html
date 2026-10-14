@@ -64,6 +64,8 @@ button{font:inherit;cursor:pointer;border:0}
 .maptoggle{width:100%;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--brand);font-weight:800;font-size:15px}
 .maptoggle[aria-expanded="true"]{background:var(--soft)}
 .pickslot{margin-top:10px}
+.dirseg{margin:0 0 14px}
+.dirseg button{font-size:16px}
 .rtbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:0 0 10px;padding:10px;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:14px;text-decoration:none}
 .rtbtn small{font-weight:600;color:var(--sub)}
 .res .links button{font:inherit;font-size:13px;font-weight:700;color:var(--brand);padding:7px 10px;border-radius:9px;background:var(--soft)}
@@ -242,12 +244,17 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-shuttle">
   <section class="card" aria-labelledby="h-find">
+    <div class="seg dirseg" id="dirSeg" role="tablist" aria-label="등교·하교 선택">
+      <button type="button" role="tab" data-dir="go" aria-selected="true">🌅 등교하기</button>
+      <button type="button" role="tab" data-dir="back" aria-selected="false">🌇 하교하기</button>
+    </div>
     <h2 id="h-find">가까운 정류장 찾기</h2>
+    <p class="note" id="findNote">집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요.</p>
     <div class="find">
       <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
-    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
+    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-pick"></div>
     <div class="results" id="results" aria-live="polite"></div>
   </section>
@@ -268,7 +275,7 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
       <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
-    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.</p>
+    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-transit"></div>
     <div class="from" id="planFrom">출발지를 먼저 정해 주세요.</div>
     <button class="btn" id="planBtn" type="button" disabled>🧭 세명대까지 경로 찾기</button>
@@ -433,6 +440,107 @@ function describe({ r, s, i, k }, now) {
 
 // 카카오맵 자동차 길찾기: 탑승 정류장 → 뒤 정류장들을 경유(최대 5곳) → 세명대
 const KAKAO_MAX_VIA = 5;
+// ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
+let sdir = "go";
+// 노선별 하교 하차 순서(학교에서 가까운 곳부터). 따로 적힌 하차 장소(잠실역·복정역·구리)가 있으면 그것을 쓴다.
+function backSeq(r) {
+  if (!r.back.times.length) return [];
+  if (r.back.stops) return r.back.stops.map(b => {
+    const base = b.stop ? r.stops.find(s => s.name === b.stop) : null;
+    return { name: b.name, place: b.place || base?.place || "", lat: b.lat ?? base.lat, lng: b.lng ?? base.lng,
+             ride: b.ride, before: b.before, note: b.note, via: b.via || [], est: true };
+  });
+  return r.stops.filter(s => !r.back.only || r.back.only.includes(s.name)).reverse()
+    .map(s => ({ ...s, ride: arriveAt(r, 0) - toMin(s.times[0]), est: true, via: [] }));  // 하교 도착은 공지에 없어 늘 어림값
+}
+function backTimesFor(x, day) {
+  return backTimes(x.r, day).filter(t => !x.b.before || toMin(t) < toMin(x.b.before));
+}
+function nearestBack(pt) {
+  const all = [];
+  DATA.routes.forEach(r => backSeq(r).forEach((b, i) => all.push({ r, b, i, s: b, k: km(pt, b) })));
+  all.sort((a, b) => a.k - b.k);
+  const seen = new Set(), out = [];
+  for (const x of all) {
+    const key = x.b.lat.toFixed(4) + "," + x.b.lng.toFixed(4);
+    if (seen.has(key)) continue;
+    seen.add(key); out.push(x);
+    if (out.length === 3) break;
+  }
+  return out;
+}
+function describeBack(x, now) {
+  const walkKm = x.k * DETOUR, walkMin = Math.ceil(walkKm * 1000 / WALK_M_PER_MIN);
+  const canWalk = walkKm <= WALK_LIMIT_KM;
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  let list = isServiceDay(now) ? backTimesFor(x, now.getDay()) : [];
+  let i = list.findIndex(t => toMin(t) >= nowMin), later = null, ended = false;
+  if (i < 0) {
+    const nd = nextServiceDay(now);
+    if (!nd) ended = true; else { later = nd; list = backTimesFor(x, nd.getDay()); i = 0; }
+  }
+  if (ended || !list.length) return { ended: true, state: "이번 학기 통학버스 운행이 끝났어요 (방학 중 미운행)", cls: "miss",
+    walkKm, walkMin, canWalk };
+  const t = list[i], dep = toMin(t), last = t === "18:40";
+  const reserve = !last && ["jamsil", "wonju", "chungju"].includes(x.r.id);
+  const arr = dep + x.b.ride, home = arr + (canWalk ? walkMin : 0);
+  const when = later ? (later - now < 6.5 * 864e5 ? `${DAYS[later.getDay()]}요일` : `${mdText(dateKey(later))}(${DAYS[later.getDay()]})`) : "";
+  const rest = list.slice(i + 1);
+  const state = later
+    ? `${isServiceDay(now) ? "오늘 하교 버스는 끝났어요" : "오늘은 운행하지 않아요"} · ${when} ${t}부터`
+    : `다음 하교 버스 ${t}${last ? " (막차)" : ""}${rest.length ? ` · 이후 ${rest.join(", ")}` : ""}`;
+  return { t, dep, last, reserve, arr, home, later, state, cls: later ? "miss" : (dep - nowMin <= 10 ? "warn" : "go"),
+           walkKm, walkMin, canWalk, note: x.b.note || x.r.back.note };
+}
+// 카카오맵 하교 경로: 학교 → (먼저 서는 하차 장소들) → 이 하차 장소
+function busBackLink(r, idx) {
+  const pt = (name, lat, lng) => `${encodeURIComponent(name.replace(/,/g, " "))},${lat},${lng}`;
+  const seq = backSeq(r), target = seq[idx], c = DATA.campus.board;
+  let via = [...target.via, ...seq.slice(0, idx)];
+  if (via.length > KAKAO_MAX_VIA)
+    via = [...new Set(Array.from({ length: KAKAO_MAX_VIA }, (_, k) => via[Math.round(k * (via.length - 1) / (KAKAO_MAX_VIA - 1))]))];
+  return "https://map.kakao.com/link/by/car/" + [pt("세명대학교", c.lat, c.lng), ...via.map(v => pt(v.name, v.lat, v.lng)), pt(target.name, target.lat, target.lng)].join("/");
+}
+
+function renderBackResults() {
+  const now = new Date(), list = nearestBack(me);
+  $("#results").innerHTML = list.map((x, n) => {
+    const d = describeBack(x, now);
+    const name = encodeURIComponent(x.b.place || x.b.name), at = `${name},${x.b.lat},${x.b.lng}`;
+    const walkHome = `https://map.kakao.com/link/by/walk/${at}/${encodeURIComponent(me.label || "도착할 곳")},${me.lat},${me.lng}`;
+    const walk = d.canWalk ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>` : `<b>${distText(d.walkKm)}</b><span>걷기엔 멀어요 · 버스·차 이용</span>`;
+    const facts = d.ended ? "" : `<div class="facts">
+        <div class="fact"><small>학교 출발</small><b>${d.t}</b><span>${d.last ? "막차 · 예약 없이" : d.reserve ? "세명통통 예약" : "문화관 앞 주차장"}</span></div>
+        <div class="fact"><small>여기 도착 ${x.b.est ? "예상" : "예정"}</small><b>${fmt(d.arr)}</b><span>소요시간 기준</span></div>
+        <div class="fact"><small>내려서 걷기</small>${walk}</div>
+      </div>`;
+    return `<article class="res" style="--c:${x.r.color}">
+      <div class="top"><h3>${esc(x.b.name)}${x.b.approx ? " (위치 근사)" : ""}</h3><span class="route">${esc(x.r.name)} 노선</span></div>
+      ${x.b.place ? `<p class="place">${esc(x.b.place)}</p>` : ""}
+      <div class="rank">${n + 1}번째로 가까운 하차 정류장</div>
+      ${facts}
+      <div class="state ${d.cls}">${d.state}</div>
+      ${!d.ended && d.canWalk ? `<div class="back">도착할 곳까지 ${fmt(d.home)} 무렵 도착 예상</div>` : ""}
+      ${d.note ? `<div class="back">${esc(d.note)}</div>` : ""}
+      <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">📋 ${esc(x.r.name)} 노선 시간표</button><a href="${busBackLink(x.r, x.i)}" target="_blank" rel="noopener">🚌 하교 경로(카카오맵)</a><a href="${walkHome}" target="_blank" rel="noopener">내려서 길찾기</a></div>
+    </article>`;
+  }).join("");
+  const far = list[0] && list[0].k > 30;
+  setMsg(far ? `가장 가까운 하차 정류장도 ${distText(list[0].k)} 떨어져 있어요. '대중교통 길찾기' 탭도 확인해 보세요.`
+             : "도착 시각은 학교 공지 소요시간으로 어림한 값이에요. 도로 사정에 따라 달라질 수 있어요.", false, "shuttle");
+}
+
+function setDir(v) {
+  sdir = v;
+  document.querySelectorAll("#dirSeg button").forEach(b => b.setAttribute("aria-selected", b.dataset.dir === v));
+  $("#h-find").textContent = v === "go" ? "가까운 정류장 찾기" : "내릴 정류장 찾기";
+  $("#findNote").textContent = v === "go"
+    ? "집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요."
+    : "집(도착할 곳)에서 가까운 하차 정류장과 다음 하교 버스를 찾아요. 학교에 있다면 '지도에서 고르기'로 집을 골라 주세요.";
+  if (me) renderResults(); else $("#results").innerHTML = "";
+  renderLists();
+}
+
 function busRouteLink(r, from) {
   const pt = (name, lat, lng) => `${encodeURIComponent(name.replace(/,/g, " "))},${lat},${lng}`;
   const rest = r.stops.slice(from + 1);
@@ -454,6 +562,7 @@ function kakaoLinks(r, s, i) {
 
 function renderResults() {
   if (!me) return;
+  if (sdir === "back") return renderBackResults();
   const now = new Date(), list = nearest(me);
   $("#results").innerHTML = list.map((x, n) => {
     const d = describe(x, now);
@@ -482,8 +591,9 @@ function renderResults() {
   setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
 }
 
-function setMe(lat, lng, label) {
+function setMe(lat, lng, label, quiet) {
   me = { lat, lng, label };
+  if (!quiet) try { localStorage.setItem("shuttle-home", JSON.stringify(me)); } catch {}
   $("#planFrom").innerHTML = `출발지: <b>${esc(label)}</b>`;
   $("#planBtn").disabled = false;
   $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
@@ -514,7 +624,7 @@ function togglePick() {
   map.setCursor(picking ? "crosshair" : "");
   placeMap();
   if (picking) { setMsg("지도에서 출발할 곳을 눌러 주세요."); $("#map").scrollIntoView({ behavior: "smooth", block: "center" }); }
-  else setMsg(me ? `출발지: ${me.label}` : "위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요.");
+  else setMsg(me ? `출발지: ${me.label}` : "위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.");
 }
 
 // ---- 지도 하나를 필요한 자리로 옮겨 쓴다 ----
@@ -622,6 +732,7 @@ function drawMap() {
 
 function renderLists() {
 
+  if (sdir === "back") { $("#routes").innerHTML = DATA.routes.map(routeBackHtml).join(""); $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`; return; }
   $("#routes").innerHTML = DATA.routes.map(r => {
     const first = r.stops[0].times;
     const arr = first.map((_, i) => fmt(arriveAt(r, i)));
@@ -634,6 +745,23 @@ function renderLists() {
   }).join("");
 
   $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`;
+}
+
+function routeBackHtml(r) {
+  const seq = backSeq(r);
+  const mt = r.back.times, fr = r.back.fri;
+  const sum = mt.length ? `하교 ${mt.join(" · ")}${fr ? `<br>금 ${fr.join(" · ")}` : ""}` : "하교 버스 없음";
+  if (!seq.length) return `<details class="rt" data-id="${r.id}" style="--c:${r.color}"><summary><i></i>${esc(r.name)}<span>${sum}</span></summary>
+      <p class="note">${esc(r.back.note)}</p></details>`;
+  const rows = seq.map((b, i) => {
+    const times = mt.filter(t => !b.before || toMin(t) < toMin(b.before)).map(t => fmt(toMin(t) + b.ride));
+    return `<li><span>${esc(b.name)}${b.place ? `<em>${esc(b.place)}</em>` : ""}${b.est ? "<em>도착 예상</em>" : ""}</span><time>${times.join(" · ")}</time></li>`;
+  }).join("");
+  return `<details class="rt" data-id="${r.id}" style="--c:${r.color}"><summary><i></i>${esc(r.name)}<span>${sum}</span></summary>
+      <a class="rtbtn" href="${busBackLink(r, seq.length - 1)}" target="_blank" rel="noopener">🗺️ 카카오맵으로 하교 경로 보기</a>
+      <ol class="line"><li class="school"><span>세명대 문화관 앞 출발<em>민송도서관 뒤편 주차장</em></span><time>${mt.join(" · ")}</time></li>${rows}</ol>
+      ${fr ? `<p class="note">금요일은 ${fr.join(" · ")} 출발이에요.</p>` : ""}
+      <p class="note">${esc(r.back.note)}</p></details>`;
 }
 
 // ---- 다른 교통편 ----
@@ -909,6 +1037,8 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   }
   drawMap();
   placeMap();
+  $("#dirSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setDir(b.dataset.dir); });
+  try { const h = JSON.parse(localStorage.getItem("shuttle-home") || "null"); if (h && h.lat) setMe(h.lat, h.lng, "기억한 위치", true); } catch {}
   document.querySelectorAll(".js-locate").forEach(b => b.addEventListener("click", locate));
   document.querySelectorAll(".js-pick").forEach(b => b.addEventListener("click", togglePick));
   $("#planBtn").addEventListener("click", () => me && plan(me));
