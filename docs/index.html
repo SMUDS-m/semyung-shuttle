@@ -149,10 +149,8 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
-.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
-.tabs button{min-height:52px;padding:5px 2px;line-height:1.2;word-break:keep-all;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:16px}
-.tabs button span{display:block;font-size:14.5px;white-space:nowrap}
-.tabs button span+span{font-size:13.5px}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+.tabs button{min-height:46px;padding:4px 2px;line-height:1.2;word-break:keep-all;letter-spacing:-.4px;font-size:clamp(12.5px,3.6vw,16px);border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800}
 .tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .view{display:grid;gap:14px}
 #mapbox{display:grid;gap:10px}
@@ -247,10 +245,10 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
       <div class="today" id="today">오늘 운행 여부 확인 중</div>
     </div>
     <nav class="tabs" role="tablist" aria-label="보기 선택">
-  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true"><span>🌅 등교</span><span>셔틀</span></button>
-  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false"><span>🌇 하교</span><span>셔틀</span></button>
-  <button type="button" role="tab" id="tab-transit" data-view="tgo" aria-controls="view-transit" aria-selected="false"><span>🌅 등교</span><span>대중교통</span></button>
-  <button type="button" role="tab" id="tab-tback" data-view="tback" aria-controls="view-transit" aria-selected="false"><span>🌇 하교</span><span>대중교통</span></button>
+  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true">등교 셔틀</button>
+  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false">하교 셔틀</button>
+  <button type="button" role="tab" id="tab-transit" data-view="tgo" aria-controls="view-transit" aria-selected="false">등교 대중교통</button>
+  <button type="button" role="tab" id="tab-tback" data-view="tback" aria-controls="view-transit" aria-selected="false">하교 대중교통</button>
 </nav>
   </div>
 </header>
