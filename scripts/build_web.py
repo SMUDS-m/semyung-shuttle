@@ -23,7 +23,7 @@ def main():
             out = []
             for s in r["stops"]:
                 src = stops[s["area"]]
-                out.append({"name": s["area"], "place": src["place"], "lat": src["lat"],
+                out.append({"name": s["area"], "place": s.get("place", src["place"]), "lat": src["lat"],
                             "lng": src["lng"], "times": s["times"]})
         item = {k: v for k, v in r.items() if k not in ("stops", "city")}
         item["stops"] = out

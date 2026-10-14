@@ -254,7 +254,7 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 
   <section class="card" aria-labelledby="h-routes">
     <h2 id="h-routes">노선별 시간표 및 경로보기</h2>
-    <p class="note">노선을 누르면 정류장 시간과 <b>카카오맵 경로 보기</b>가 나와요. 학기 중 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
+    <p class="note">노선을 누르면 정류장 시간과 <b>카카오맵 경로 보기</b>가 나와요. <span id="termNote">학기 중</span> 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
     <div id="routes"></div>
   </section>
 
@@ -351,9 +351,15 @@ function km(a, b) {
 }
 const distText = k => k < 1 ? Math.round(k * 1000) + "m" : k.toFixed(k < 10 ? 1 : 0) + "km";
 const isWeekday = d => d.getDay() >= 1 && d.getDay() <= 5;
+// 학기 운행 기간(학교 공지) 안의 평일만 운행일. 공휴일은 알 수 없어 안내 문구로만 둔다.
+const dateKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const inTerm = d => !DATA.service || (dateKey(d) >= DATA.service.from && dateKey(d) <= DATA.service.to);
+const isServiceDay = d => isWeekday(d) && inTerm(d);
+const mdText = k => k.slice(5).replace("-", "/").replace(/^0/, "").replace("/0", "/");
 function nextServiceDay(d) {
-  const n = new Date(d); do { n.setDate(n.getDate() + 1); } while (!isWeekday(n));
-  return n;
+  const n = new Date(d);
+  for (let i = 0; i < 400; i++) { n.setDate(n.getDate() + 1); if (isServiceDay(n)) return n; }
+  return null;
 }
 
 // 학교 도착 시각: 원주·충주는 공지값, 나머지는 첫 정류장 출발 + 소요시간
@@ -385,7 +391,7 @@ function describe({ r, s, i, k }, now) {
   const canWalk = walkKm <= WALK_LIMIT_KM;
   const nowMin = now.getHours() * 60 + now.getMinutes();
   const ready = nowMin + (canWalk ? walkMin : 0);
-  const service = isWeekday(now);
+  const service = isServiceDay(now);
   let bus = null, state, cls;
   if (service) {
     const t = s.times.findIndex(t => toMin(t) >= ready);
@@ -400,18 +406,23 @@ function describe({ r, s, i, k }, now) {
   }
   if (!bus) {
     const nd = nextServiceDay(now);
-    bus = { trip: 0, dep: toMin(s.times[0]), later: nd };
-    state = service ? `오늘 등교 버스는 끝났어요 · ${DAYS[nd.getDay()]}요일 첫차` : `오늘은 운행하지 않아요 · ${DAYS[nd.getDay()]}요일 첫차`;
+    bus = { trip: 0, dep: toMin(s.times[0]), later: nd || now, ended: !nd };
+    // 다음 운행일이 일주일 안이면 요일, 더 멀면(방학 뒤 개강 등) 날짜로
+    const when = !nd ? "" : (nd - now < 6.5 * 864e5 ? `${DAYS[nd.getDay()]}요일 첫차` : `${mdText(dateKey(nd))}(${DAYS[nd.getDay()]}) 첫차`);
+    state = !nd ? "이번 학기 통학버스 운행이 끝났어요 (방학 중 미운행)"
+      : service ? `오늘 등교 버스는 끝났어요 · ${when}`
+      : inTerm(now) ? `오늘은 운행하지 않아요 · ${when}` : `방학 중이라 운행하지 않아요 · ${when}`;
     cls = "miss";
   }
   const arr = arriveAt(r, bus.trip);
   const leave = bus.dep - (canWalk ? walkMin : 0);
 
   // 하교: 학교 출발 + (학교 도착 − 이 정류장 출발)
-  const day = service ? now.getDay() : bus.later.getDay();
+  const day = (bus.later || now).getDay();
   let back;
   const bt = backTimes(r, day);
-  if (bt.length && (!r.back.only || r.back.only.includes(s.name))) {
+  if (bus.ended) back = "하교: 이번 학기 운행이 끝났어요. 다음 학기 운행은 학교 공지를 확인해 주세요.";
+  else if (bt.length && (!r.back.only || r.back.only.includes(s.name))) {
     const ride = arriveAt(r, 0) - toMin(s.times[0]);
     back = `하교: 학교 ${bt.join(" · ")} 출발 → 여기 도착 예상 ${bt.map(t => fmt(toMin(t) + ride)).join(" · ")}`;
   } else back = "하교: " + r.back.note;
@@ -857,9 +868,12 @@ async function plan(origin) {
 }
 
 function renderToday() {
-  const d = new Date(), el = $("#today");
-  if (isWeekday(d)) el.textContent = `오늘(${DAYS[d.getDay()]}) 운행일 · 공휴일·방학이면 운행 안 함`;
-  else { el.classList.add("off"); el.textContent = `오늘(${DAYS[d.getDay()]})은 운행하지 않아요`; }
+  const d = new Date(), el = $("#today"), sv = DATA.service, k = dateKey(d);
+  const term = sv ? `${sv.label} ${mdText(sv.from)}~${mdText(sv.to)}` : "";
+  if (sv && k < sv.from) { el.classList.add("off"); el.textContent = `방학 중 운행 안 함 · ${term} 운행`; }
+  else if (sv && k > sv.to) { el.classList.add("off"); el.textContent = `${sv.label} 운행 끝(${mdText(sv.to)}) · 방학 중 운행 안 함`; }
+  else if (isWeekday(d)) el.textContent = `오늘(${DAYS[d.getDay()]}) 운행일 · ${term} · 공휴일 운행 안 함`;
+  else { el.classList.add("off"); el.textContent = `오늘(${DAYS[d.getDay()]})은 운행하지 않아요 · ${term}`; }
 }
 
 function loadKakao() {
@@ -884,6 +898,7 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
   renderToday(); renderLists(); bindTransit();
+  if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
   $("#results").addEventListener("click", e => { const b = e.target.closest(".go-route"); if (b) showRoute(b.dataset.id); });
   document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view, true); });
   showView(location.hash === "#transit" ? "transit" : "shuttle");
