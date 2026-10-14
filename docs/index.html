@@ -64,8 +64,6 @@ button{font:inherit;cursor:pointer;border:0}
 .maptoggle{width:100%;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--brand);font-weight:800;font-size:15px}
 .maptoggle[aria-expanded="true"]{background:var(--soft)}
 .pickslot{margin-top:10px}
-.dirseg{margin:0 0 14px}
-.dirseg button{font-size:16px}
 .rtbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:0 0 10px;padding:10px;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:14px;text-decoration:none}
 .rtbtn small{font-weight:600;color:var(--sub)}
 .res .links button{font:inherit;font-size:13px;font-weight:700;color:var(--brand);padding:7px 10px;border-radius:9px;background:var(--soft)}
@@ -138,7 +136,7 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
-.tabs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:6px}
+.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .tabs button{min-height:46px;padding:6px;line-height:1.25;word-break:keep-all;border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:16px}
 .tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .view{display:grid;gap:14px}
@@ -234,20 +232,17 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
       <div class="today" id="today">오늘 운행 여부 확인 중</div>
     </div>
     <nav class="tabs" role="tablist" aria-label="보기 선택">
-  <button type="button" role="tab" id="tab-shuttle" data-view="shuttle" aria-controls="view-shuttle" aria-selected="true">🚌 셔틀버스</button>
-  <button type="button" role="tab" id="tab-transit" data-view="transit" aria-controls="view-transit" aria-selected="false">🧭 대중교통 길찾기</button>
+  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true">🌅 등교 셔틀</button>
+  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false">🌇 하교 셔틀</button>
+  <button type="button" role="tab" id="tab-transit" data-view="transit" aria-controls="view-transit" aria-selected="false">🧭 대중교통</button>
 </nav>
   </div>
 </header>
 
 <main>
 
-<div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-shuttle">
+<div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-go">
   <section class="card" aria-labelledby="h-find">
-    <div class="seg dirseg" id="dirSeg" role="tablist" aria-label="등교·하교 선택">
-      <button type="button" role="tab" data-dir="go" aria-selected="true">🌅 등교하기</button>
-      <button type="button" role="tab" data-dir="back" aria-selected="false">🌇 하교하기</button>
-    </div>
     <h2 id="h-find">가까운 정류장 찾기</h2>
     <p class="note" id="findNote">집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요.</p>
     <div class="find">
@@ -526,13 +521,12 @@ function renderBackResults() {
     </article>`;
   }).join("");
   const far = list[0] && list[0].k > 30;
-  setMsg(far ? `가장 가까운 하차 정류장도 ${distText(list[0].k)} 떨어져 있어요. '대중교통 길찾기' 탭도 확인해 보세요.`
+  setMsg(far ? `가장 가까운 하차 정류장도 ${distText(list[0].k)} 떨어져 있어요. '대중교통' 탭도 확인해 보세요.`
              : "도착 시각은 학교 공지 소요시간으로 어림한 값이에요. 도로 사정에 따라 달라질 수 있어요.", false, "shuttle");
 }
 
 function setDir(v) {
   sdir = v;
-  document.querySelectorAll("#dirSeg button").forEach(b => b.setAttribute("aria-selected", b.dataset.dir === v));
   $("#h-find").textContent = v === "go" ? "가까운 정류장 찾기" : "내릴 정류장 찾기";
   $("#findNote").textContent = v === "go"
     ? "집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요."
@@ -586,7 +580,7 @@ function renderResults() {
 
   const far = list[0].k > 30;
   setMsg(far
-    ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요. '대중교통 길찾기' 탭도 확인해 보세요.`
+    ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요. '대중교통' 탭도 확인해 보세요.`
     : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.", false, "shuttle");
   setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
 }
@@ -664,12 +658,14 @@ function fitTransit() {
   fit(pts, 40, 4);
 }
 
+// 위 탭 3개: go(등교 셔틀) · back(하교 셔틀) 은 같은 셔틀 화면을 방향만 바꿔 쓴다
 function showView(v, push) {
-  view = v;
+  view = v === "transit" ? "transit" : "shuttle";
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
-  $("#view-shuttle").hidden = v !== "shuttle";
-  $("#view-transit").hidden = v !== "transit";
-  if (push) history.replaceState(null, "", v === "transit" ? "#transit" : location.pathname + location.search);
+  $("#view-shuttle").hidden = view !== "shuttle";
+  $("#view-transit").hidden = view !== "transit";
+  if (view === "shuttle" && v !== sdir) setDir(v);
+  if (push) history.replaceState(null, "", v === "go" ? location.pathname + location.search : "#" + v);
   if (picking && map) togglePick(); else placeMap();
 }
 
@@ -1029,7 +1025,7 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
   $("#results").addEventListener("click", e => { const b = e.target.closest(".go-route"); if (b) showRoute(b.dataset.id); });
   document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view, true); });
-  showView(location.hash === "#transit" ? "transit" : "shuttle");
+  showView(["#transit", "#back"].includes(location.hash) ? location.hash.slice(1) : "go");
   try { await loadKakao(); } catch {
     $("#map").innerHTML = '<div class="maperr">카카오맵을 불러오지 못했어요. 새로고침해 보세요.<br>아래 시간표와 정류장 위치 링크는 그대로 쓸 수 있어요.</div>';
     document.querySelectorAll(".js-locate,.js-pick").forEach(b => b.disabled = true);
@@ -1037,7 +1033,6 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   }
   drawMap();
   placeMap();
-  $("#dirSeg").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setDir(b.dataset.dir); });
   try { const h = JSON.parse(localStorage.getItem("shuttle-home") || "null"); if (h && h.lat) setMe(h.lat, h.lng, "기억한 위치", true); } catch {}
   document.querySelectorAll(".js-locate").forEach(b => b.addEventListener("click", locate));
   document.querySelectorAll(".js-pick").forEach(b => b.addEventListener("click", togglePick));
