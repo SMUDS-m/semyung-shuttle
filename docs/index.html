@@ -64,7 +64,8 @@ button{font:inherit;cursor:pointer;border:0}
 .maptoggle{width:100%;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);color:var(--brand);font-weight:800;font-size:15px}
 .maptoggle[aria-expanded="true"]{background:var(--soft)}
 .pickslot{margin-top:10px}
-#view-shuttle[data-dir="go"] .back-only,#view-shuttle[data-dir="back"] .go-only{display:none!important}
+#view-shuttle[data-dir="go"] .back-only,#view-shuttle[data-dir="back"] .go-only,
+#view-transit[data-dir="go"] .back-only,#view-transit[data-dir="back"] .go-only{display:none!important}
 .addr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
 .addr input{font:inherit;font-size:16px;min-height:52px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0}
 .addr input:focus-visible{outline:3px solid var(--warn);outline-offset:1px}
@@ -148,8 +149,10 @@ th{font-size:12px;color:var(--sub)}
 .hub h3{margin:0;font-size:15px}
 .hub p{margin:0;font-size:13.5px;line-height:1.55}
 .sum{font-size:13.5px;margin:0 0 8px;line-height:1.5}
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.tabs button{min-height:46px;padding:6px;line-height:1.25;word-break:keep-all;border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:16px}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.tabs button{min-height:52px;padding:5px 2px;line-height:1.2;word-break:keep-all;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:12px;background:var(--soft);border:1px solid var(--line);color:var(--sub);font-weight:800;font-size:16px}
+.tabs button span{display:block;font-size:14.5px;white-space:nowrap}
+.tabs button span+span{font-size:13.5px}
 .tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
 .view{display:grid;gap:14px}
 #mapbox{display:grid;gap:10px}
@@ -244,9 +247,10 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
       <div class="today" id="today">오늘 운행 여부 확인 중</div>
     </div>
     <nav class="tabs" role="tablist" aria-label="보기 선택">
-  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true">🌅 등교 셔틀</button>
-  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false">🌇 하교 셔틀</button>
-  <button type="button" role="tab" id="tab-transit" data-view="transit" aria-controls="view-transit" aria-selected="false">🧭 대중교통</button>
+  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true"><span>🌅 등교</span><span>셔틀</span></button>
+  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false"><span>🌇 하교</span><span>셔틀</span></button>
+  <button type="button" role="tab" id="tab-transit" data-view="tgo" aria-controls="view-transit" aria-selected="false"><span>🌅 등교</span><span>대중교통</span></button>
+  <button type="button" role="tab" id="tab-tback" data-view="tback" aria-controls="view-transit" aria-selected="false"><span>🌇 하교</span><span>대중교통</span></button>
 </nav>
   </div>
 </header>
@@ -281,11 +285,18 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 
 </div>
 
-<div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" hidden>
+<div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" data-dir="go" hidden>
   <section class="card" aria-labelledby="h-plan">
     <h2 id="h-plan">세명대까지 대중교통 길찾기</h2>
-    <p class="note">셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.</p>
-    <div class="find">
+    <p class="note" id="planIntro">셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.</p>
+    <form class="addr back-only" id="addrFormT" autocomplete="off">
+      <label class="sr" for="homeAddrT">집 주소</label>
+      <input id="homeAddrT" type="search" enterkeyhint="search" placeholder="예: 서울 동대문구 회기동 ○○아파트">
+      <button class="btn" type="submit">🔍 찾기</button>
+    </form>
+    <ul class="addrlist back-only" id="addrListT" aria-live="polite"></ul>
+    <p class="back-only pickalt">주소가 안 나오면 <button type="button" class="linkbtn js-pick" aria-pressed="false">지도에서 집 고르기</button></p>
+    <div class="find go-only">
       <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
@@ -455,14 +466,36 @@ function describe({ r, s, i, k }, now) {
 // 카카오맵 자동차 길찾기: 탑승 정류장 → 뒤 정류장들을 경유(최대 5곳) → 세명대
 const KAKAO_MAX_VIA = 5;
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
-let sdir = "go";
+let sdir = "go", tdir = "go";
+function updatePlanFrom() {
+  const go = tdir === "go", p = go ? me : home;
+  $("#planFrom").innerHTML = p ? `${go ? "출발지" : "도착지(집)"}: <b>${esc(p.label || "고른 위치")}</b>` : (go ? "출발지를 먼저 정해 주세요." : "집 주소를 먼저 넣어 주세요.");
+  $("#planBtn").disabled = !p;
+}
+function setTDir(d) {
+  tdir = d;
+  $("#view-transit").dataset.dir = d;
+  if (picking && map) togglePick();
+  const back = d === "back";
+  $("#h-plan").textContent = back ? "집까지 대중교통 길찾기" : "세명대까지 대중교통 길찾기";
+  $("#planIntro").textContent = back ? "학교에서 집까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣어 주세요."
+                                     : "셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.";
+  $("#planBtn").textContent = back ? "🧭 집까지 경로 찾기" : "🧭 세명대까지 경로 찾기";
+  $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
+  setMsg(back ? (home ? "저장한 집이 있어요. 아래 버튼으로 집까지 경로를 찾아보세요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요." : "입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.") : "위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "transit");
+  updatePlanFrom();
+  tr.dir = back ? "from_jecheon" : "to_jecheon";
+  renderTransit();
+}
 let home = null;   // 하교용 집 위치 {lat, lng, label} — 등교·대중교통용 위치(me)와 따로 기억
 try { const h = JSON.parse(localStorage.getItem("shuttle-addr") || "null"); if (h && h.lat) home = h; } catch {}
 function setHome(lat, lng, label) {
   home = { lat, lng, label };
   try { localStorage.setItem("shuttle-addr", JSON.stringify(home)); } catch {}
-  $("#addrList").innerHTML = "";
-  if (label && $("#homeAddr").value.trim() === "") $("#homeAddr").value = label;
+  $("#addrList").innerHTML = ""; $("#addrListT").innerHTML = "";
+  ["#homeAddr", "#homeAddrT"].forEach(s => { if (label) $(s).value = label; });
+  if (tdir === "back") { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; setMsg("집을 정했어요. 아래 버튼으로 집까지 경로를 찾아보세요.", false, "transit"); }
+  updatePlanFrom();
   renderResults(); placeMap();
 }
 
@@ -479,16 +512,16 @@ function searchAddr(q) {
     return [...x, ...y].filter(c => { const k = c.lat.toFixed(4) + c.lng.toFixed(4); if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 5);
   });
 }
-async function onAddrSubmit(e) {
+async function onAddrSubmit(e, inputSel, listSel, scope) {
   e.preventDefault();
-  const q = $("#homeAddr").value.trim(), list = $("#addrList");
-  if (!q) { setMsg("집 주소나 아파트·건물 이름을 넣어 주세요.", true, "shuttle"); return; }
-  if (!(window.kakao && kakao.maps && kakao.maps.services)) { setMsg("주소 검색을 불러오지 못했어요. 새로고침하거나 '지도에서 집 고르기'를 써 주세요.", true, "shuttle"); return; }
-  setMsg("주소를 찾는 중이에요…", false, "shuttle");
+  const q = $(inputSel).value.trim(), list = $(listSel);
+  if (!q) { setMsg("집 주소나 아파트·건물 이름을 넣어 주세요.", true, scope); return; }
+  if (!(window.kakao && kakao.maps && kakao.maps.services)) { setMsg("주소 검색을 불러오지 못했어요. 새로고침하거나 '지도에서 집 고르기'를 써 주세요.", true, scope); return; }
+  setMsg("주소를 찾는 중이에요…", false, scope);
   const c = await searchAddr(q);
-  if (!c.length) { list.innerHTML = ""; setMsg("찾는 주소가 없어요. 시·구·동을 함께 넣거나 '지도에서 집 고르기'를 써 주세요.", true, "shuttle"); return; }
+  if (!c.length) { list.innerHTML = ""; setMsg("찾는 주소가 없어요. 시·구·동을 함께 넣거나 '지도에서 집 고르기'를 써 주세요.", true, scope); return; }
   if (c.length === 1) return setHome(c[0].lat, c[0].lng, c[0].name);
-  setMsg("집과 가장 가까운 곳을 골라 주세요.", false, "shuttle");
+  setMsg("집과 가장 가까운 곳을 골라 주세요.", false, scope);
   list.innerHTML = c.map((x, i) => `<li><button type="button" data-i="${i}">${esc(x.name)}${x.sub ? `<small>${esc(x.sub)}</small>` : ""}</button></li>`).join("");
   list.onclick = ev => { const b = ev.target.closest("button"); if (b) { const x = c[+b.dataset.i]; setHome(x.lat, x.lng, x.name); } };
 }
@@ -640,15 +673,14 @@ function renderResults() {
   setMsg(far
     ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요. '대중교통' 탭도 확인해 보세요.`
     : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.", false, "shuttle");
-  setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
+  if (tdir === "go") setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
 }
 
 function setMe(lat, lng, label, quiet) {
   me = { lat, lng, label };
   if (!quiet) try { localStorage.setItem("shuttle-home", JSON.stringify(me)); } catch {}
-  $("#planFrom").innerHTML = `출발지: <b>${esc(label)}</b>`;
-  $("#planBtn").disabled = false;
-  $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
+  if (tdir === "go") { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; }
+  updatePlanFrom();
   if (tr.tab === "city") renderTransit();
   if (meMarker) meMarker.setMap(null);
   const el = document.createElement("div");
@@ -716,14 +748,16 @@ function fitTransit() {
   fit(pts, 40, 4);
 }
 
-// 위 탭 3개: go(등교 셔틀) · back(하교 셔틀) 은 같은 셔틀 화면을 방향만 바꿔 쓴다
+// 위 탭 4개: 셔틀(go·back) / 대중교통(tgo·tback) 은 각각 같은 화면을 방향만 바꿔 쓴다
+const VIEW_HASH = { go: "", back: "#back", tgo: "#transit", tback: "#transit-back" };
 function showView(v, push) {
-  view = v === "transit" ? "transit" : "shuttle";
+  view = v === "tgo" || v === "tback" ? "transit" : "shuttle";
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
   $("#view-shuttle").hidden = view !== "shuttle";
   $("#view-transit").hidden = view !== "transit";
   if (view === "shuttle" && v !== sdir) setDir(v);
-  if (push) history.replaceState(null, "", v === "go" ? location.pathname + location.search : "#" + v);
+  if (view === "transit" && (v === "tback" ? "back" : "go") !== tdir) setTDir(v === "tback" ? "back" : "go");
+  if (push) history.replaceState(null, "", VIEW_HASH[v] || location.pathname + location.search);
   if (picking && map) togglePick(); else placeMap();
 }
 
@@ -782,7 +816,7 @@ function drawMap() {
   kakao.maps.event.addListener(map, "click", e => {
     if (!picking) return;
     togglePick();
-    if (view === "shuttle" && sdir === "back") setHome(e.latLng.getLat(), e.latLng.getLng(), "지도에서 고른 집");
+    if ((view === "shuttle" && sdir === "back") || (view === "transit" && tdir === "back")) setHome(e.latLng.getLat(), e.latLng.getLng(), "지도에서 고른 집");
     else setMe(e.latLng.getLat(), e.latLng.getLng(), "고른 위치");
   });
 }
@@ -829,11 +863,12 @@ const durText = d => { const [h, m] = d.split(":").map(Number); return (h ? h + 
 
 function hubBox(hub, label) {
   const campus = { name: CAMPUS_NAME, lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
-  const k = km(hub, campus) * DETOUR;
-  return `<div class="hub"><h3>${esc(hub.name)} → 세명대 (${label})</h3>
-    <p>🚏 시내버스 ${esc(hub.bus)}</p>
+  const k = km(hub, campus) * DETOUR, back = tdir === "back";
+  const [a, b] = back ? [campus, hub] : [hub, campus];
+  return `<div class="hub"><h3>${back ? `세명대 → ${esc(hub.name)}` : `${esc(hub.name)} → 세명대`} (${label})</h3>
+    <p>🚏 시내버스 ${esc(back ? hub.bus.replace(/\(([^)]*)\)/, "(세명대 동문 한방병원·세명대입구사거리에서 타요)") : hub.bus)}</p>
     <p>🚕 택시 도로 약 ${k.toFixed(0)}km · ${Math.round(k / 30 * 60)}분 안팎 (시속 30km 어림값)</p>
-    <div class="links"><a href="${kakaoBy("traffic", hub, campus)}" target="_blank" rel="noopener">대중교통 길찾기</a><a href="${kakaoBy("car", hub, campus)}" target="_blank" rel="noopener">자동차 길찾기</a></div></div>`;
+    <div class="links"><a href="${kakaoBy("traffic", a, b)}" target="_blank" rel="noopener">대중교통 길찾기</a><a href="${kakaoBy("car", a, b)}" target="_blank" rel="noopener">자동차 길찾기</a></div></div>`;
 }
 
 function renderTransit() {
@@ -845,9 +880,13 @@ function renderTransit() {
     const campus = { name: CAMPUS_NAME, lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
     $("#trBody").innerHTML = `<p class="sum">학교 앞 정류장: <b>${esc(T.campus_stops)}</b><br>지나는 시내버스: ${T.citybus_routes.map(n => `<span class="kind">${esc(n)}</span>`).join(" ")}</p>
       <p class="note">시내버스 시간표는 공개된 자료가 없어 실시간 도착 정보가 있는 카카오맵 길찾기로 연결해요.</p>
-      ${hubBox(T.hubs.station, "기차로 왔을 때")}${hubBox(T.hubs.terminal, "시외버스로 왔을 때")}
-      <div class="hub"><h3>지금 있는 곳 → 세명대</h3><p>${me ? "찾은 내 위치에서 출발하는 대중교통 길을 보여 줘요." : "위에서 '내 위치로 찾기'를 하면 내 위치에서 출발해요. 아니면 카카오맵에서 출발지를 직접 고르세요."}</p>
-      <div class="links"><a href="${me ? kakaoBy("traffic", { name: "내 위치", ...me }, campus) : `https://map.kakao.com/link/to/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`}" target="_blank" rel="noopener">대중교통 길찾기</a></div></div>`;
+      ${tdir === "back" ? hubBox(T.hubs.station, "기차 타러 갈 때") + hubBox(T.hubs.terminal, "시외버스 타러 갈 때")
+                        : hubBox(T.hubs.station, "기차로 왔을 때") + hubBox(T.hubs.terminal, "시외버스로 왔을 때")}
+      ${tdir === "back"
+        ? `<div class="hub"><h3>세명대 → 집</h3><p>${home ? "넣은 집 주소까지 가는 대중교통 길을 보여 줘요." : "위에서 집 주소를 넣으면 집까지 가는 길을 보여 줘요."}</p>
+      <div class="links"><a href="${home ? kakaoBy("traffic", campus, { name: home.label || "집", ...home }) : `https://map.kakao.com/link/map/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`}" target="_blank" rel="noopener">대중교통 길찾기</a></div></div>`
+        : `<div class="hub"><h3>지금 있는 곳 → 세명대</h3><p>${me ? "찾은 내 위치에서 출발하는 대중교통 길을 보여 줘요." : "위에서 '내 위치로 찾기'를 하면 내 위치에서 출발해요. 아니면 카카오맵에서 출발지를 직접 고르세요."}</p>
+      <div class="links"><a href="${me ? kakaoBy("traffic", { name: "내 위치", ...me }, campus) : `https://map.kakao.com/link/to/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`}" target="_blank" rel="noopener">대중교통 길찾기</a></div></div>`}`;
     return;
   }
   const list = tr.tab === "train" ? T.train : T.bus;
@@ -921,9 +960,10 @@ function odsay(api, params) {
 }
 
 // 같은 도시 안 경로. 700m 이내 등으로 실패하면 걷기로 대신한다.
-async function cityPath(a, b, hubName) {
+async function cityPath(a, b, hubName, fromCampus) {
   const r4 = v => Math.round(v * 1e4) / 1e4;
-  if (hubName && DATA.lastmile?.[hubName]) return DATA.lastmile[hubName];  // 미리 받아 둔 역·터미널 → 학교
+  const pre = fromCampus ? DATA.firstmile : DATA.lastmile;   // 미리 받아 둔 학교 ↔ 역·터미널
+  if (hubName && pre?.[hubName]) return pre[hubName];
   try {
     const r = await odsay("searchPubTransPathT", { SX: r4(a.lng), SY: r4(a.lat), EX: r4(b.lng), EY: r4(b.lat), SearchType: 0 });
     if (r.searchType === 0 && r.path?.length) return r.path[0];
@@ -958,6 +998,15 @@ function staticTimes(s) {
   const T = DATA.transit;
   if (!T) return null;
   const toJc = /제천/.test(s.endName);
+  // 하교: 제천역·제천버스터미널에서 떠나는 방향
+  if (s.trafficType === 4 && s.startName === "제천") {
+    const tr = T.train.find(x => x.from === s.endName);
+    return tr ? tr.from_jecheon.map(x => ({ dep: x.dep, arr: x.arr, name: `${x.kind} ${x.no}`, fare: x.fare })) : null;
+  }
+  if (s.trafficType === 6 && s.startName === "제천버스터미널") {
+    const b = T.bus.find(x => x.terminal === s.endName);
+    return b ? b.from_jecheon.map(x => ({ dep: x.dep, arr: x.arr, name: `시외버스 ${x.kind}`, fare: x.fare })) : null;
+  }
   if (s.trafficType === 4 && s.endName === "제천") {
     const tr = T.train.find(x => x.from === s.startName);
     return tr ? tr.to_jecheon.map(x => ({ dep: x.dep, arr: x.arr, name: `${x.kind} ${x.no}`, fare: x.fare })) : null;
@@ -988,9 +1037,12 @@ async function serviceTimes(s) {
   return out.sort((a, b) => toMin(a.dep) - toMin(b.dep));
 }
 
-async function planIntercity(origin, leg, campus, nowMin) {
+async function planIntercity(origin, leg, dest, nowMin, back) {
   const st = { lat: leg.startY, lng: leg.startX }, en = { lat: leg.endY, lng: leg.endX };
-  const [first, times, last] = await Promise.all([cityPath(origin, st), serviceTimes(leg).catch(() => []), cityPath(en, campus, leg.endName)]);
+  const [first, times, last] = await Promise.all([
+    back ? cityPath(origin, st, leg.startName, true) : cityPath(origin, st),
+    serviceTimes(leg).catch(() => []),
+    back ? cityPath(en, dest) : cityPath(en, dest, leg.endName)]);
   const ready = nowMin + first.info.totalTime + 10;  // 역·터미널에서 10분 여유
   let i = times.findIndex(x => toMin(x.dep) >= ready), tomorrow = false;
   if (i < 0 && times.length) { i = 0; tomorrow = true; }
@@ -1007,16 +1059,19 @@ async function planIntercity(origin, leg, campus, nowMin) {
       <ol class="legs">${legLines(first, leave)}
       <li><i>${ICON[leg.trafficType]}</i><span><span class="no" style="--lc:#173f7a">${esc(run?.name || KIND[leg.trafficType])}</span> ${esc(leg.startName)} → ${esc(leg.endName)}<small>${run ? `${run.dep} 출발 · ${run.arr} 도착${later.length ? " · 다음 " + later.join(", ") : ""}` : "시각표 정보 없음 · 예매 사이트에서 확인"}</small></span><time>${run ? run.dep : leg.sectionTime + "분"}</time></li>
       ${legLines(last, arrHub)}
-      <li><i>🏫</i><span>세명대 도착</span><time>${fmt(arrive)}</time></li></ol></div>`
+      <li><i>${back ? "🏠" : "🏫"}</i><span>${back ? "집 도착" : "세명대 도착"}</span><time>${fmt(arrive)}</time></li></ol></div>`
   };
 }
 
-async function plan(origin) {
+// back=false: 출발지(내 위치) → 세명대 / back=true: 세명대 → 집
+async function plan(place, back) {
   const out = $("#planOut"), campus = { lat: DATA.campus.board.lat, lng: DATA.campus.board.lng };
+  const origin = back ? campus : place, dest = back ? place : campus;
+  const oName = back ? CAMPUS_NAME : "출발지", dName = back ? (place.label || "집") : CAMPUS_NAME;
   out.innerHTML = `<p class="note"><span class="spin"></span>경로를 찾는 중이에요…</p>`;
   const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
   try {
-    const r = await odsay("searchPubTransPathT", { SX: origin.lng, SY: origin.lat, EX: campus.lng, EY: campus.lat });
+    const r = await odsay("searchPubTransPathT", { SX: origin.lng, SY: origin.lat, EX: dest.lng, EY: dest.lat });
     let cards;
     if (r.searchType === 0) {
       cards = r.path.slice(0, 3).map(p => {
@@ -1035,16 +1090,16 @@ async function plan(origin) {
         seen.add(k); legs.push(s);
         if (legs.length === 3) break;
       }
-      const opts = (await Promise.all(legs.map(l => planIntercity(origin, l, campus, nowMin).catch(() => null)))).filter(Boolean);
+      const opts = (await Promise.all(legs.map(l => planIntercity(origin, l, dest, nowMin, back).catch(() => null)))).filter(Boolean);
       opts.sort((a, b) => (a.tomorrow - b.tomorrow) || (a.arrive - b.arrive));
       cards = opts.slice(0, 3).map(o => o.html);
       $("#planNote").textContent = "기차·시외버스는 시각표 기준, 시내 구간은 버스 기다리는 시간이 빠진 어림값이에요. 역·터미널에서 10분 여유를 두었어요.";
     }
-    const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent("출발지")},${origin.lat},${origin.lng}/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`;
+    const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
     out.innerHTML = (cards.length ? cards.join("") : `<p class="note">찾은 경로가 없어요.</p>`) +
       `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵에서 실시간으로 보기</a></div><p class="note">경로 자료: ODsay 대중교통 API</p>`;
   } catch (e) {
-    const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent("출발지")},${origin.lat},${origin.lng}/${encodeURIComponent(CAMPUS_NAME)},${campus.lat},${campus.lng}`;
+    const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
     out.innerHTML = (e.code === "429"
       ? `<p class="msg err">오늘 길찾기 사용 한도가 다 찼어요. 내일 다시 쓸 수 있어요.</p>`
       : `<p class="msg err">경로를 찾지 못했어요 (${esc(e.message)}). 잠시 뒤 다시 눌러 주세요.</p>`) +
@@ -1086,7 +1141,7 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
   $("#results").addEventListener("click", e => { const b = e.target.closest(".go-route"); if (b) showRoute(b.dataset.id); });
   document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view, true); });
-  showView(["#transit", "#back"].includes(location.hash) ? location.hash.slice(1) : "go");
+  showView(Object.keys(VIEW_HASH).find(k => VIEW_HASH[k] && VIEW_HASH[k] === location.hash) || "go");
   try { await loadKakao(); } catch {
     $("#map").innerHTML = '<div class="maperr">카카오맵을 불러오지 못했어요. 새로고침해 보세요.<br>아래 시간표와 정류장 위치 링크는 그대로 쓸 수 있어요.</div>';
     document.querySelectorAll(".js-locate,.js-pick").forEach(b => b.disabled = true);
@@ -1095,12 +1150,14 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   drawMap();
   placeMap();
   try { const h = JSON.parse(localStorage.getItem("shuttle-home") || "null"); if (h && h.lat) setMe(h.lat, h.lng, "기억한 위치", true); } catch {}
-  $("#addrForm").addEventListener("submit", onAddrSubmit);
-  if (home) $("#homeAddr").value = home.label || "";
+  $("#addrForm").addEventListener("submit", e => onAddrSubmit(e, "#homeAddr", "#addrList", "shuttle"));
+  $("#addrFormT").addEventListener("submit", e => onAddrSubmit(e, "#homeAddrT", "#addrListT", "transit"));
+  if (home) { $("#homeAddr").value = $("#homeAddrT").value = home.label || ""; }
+  updatePlanFrom();
   if (sdir === "back") renderResults();
   document.querySelectorAll(".js-locate").forEach(b => b.addEventListener("click", locate));
   document.querySelectorAll(".js-pick").forEach(b => b.addEventListener("click", togglePick));
-  $("#planBtn").addEventListener("click", () => me && plan(me));
+  $("#planBtn").addEventListener("click", () => tdir === "back" ? (home && plan(home, true)) : (me && plan(me)));
   setInterval(renderResults, 60000);
 }).catch(() => setMsg("노선 자료를 불러오지 못했어요. 새로고침해 주세요.", true));
 </script>

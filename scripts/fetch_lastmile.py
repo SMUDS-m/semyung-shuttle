@@ -1,6 +1,7 @@
-"""제천역·봉양역·터미널 등 → 세명대 시내 구간을 ODsay 로 미리 받아 data/lastmile.json 에 저장한다.
+"""제천역·봉양역·터미널 등 ↔ 세명대 시내 구간을 ODsay 로 미리 받아 둔다.
 
-ODSAY_KEY=... python3 scripts/fetch_lastmile.py
+ODSAY_KEY=... python3 scripts/fetch_lastmile.py            # 역·터미널 → 학교 (data/lastmile.json, 등교)
+ODSAY_KEY=... python3 scripts/fetch_lastmile.py --from-campus  # 학교 → 역·터미널 (data/firstmile.json, 하교)
 페이지가 길찾기 때마다 ODsay 를 부르지 않도록(무료 하루 한도) 고정 구간을 정적 파일로 둔다.
 ODsay 웹 키는 등록 도메인에서만 동작하므로 Referer 를 localhost 로 보낸다.
 """
@@ -23,8 +24,8 @@ HUBS = {
 }
 
 
-def search(sx, sy):
-    q = urllib.parse.urlencode({"SX": sx, "SY": sy, "EX": CAMPUS[0], "EY": CAMPUS[1],
+def search(sx, sy, ex=CAMPUS[0], ey=CAMPUS[1]):
+    q = urllib.parse.urlencode({"SX": sx, "SY": sy, "EX": ex, "EY": ey,
                                 "SearchType": 0, "apiKey": os.environ["ODSAY_KEY"]})
     req = urllib.request.Request("https://api.odsay.com/v1/api/searchPubTransPathT?" + q,
                                  headers={"Referer": "http://localhost:8743/"})
@@ -32,9 +33,11 @@ def search(sx, sy):
 
 
 def main():
+    import sys
+    rev = "--from-campus" in sys.argv
     out = {}
     for name, (x, y) in HUBS.items():
-        r = search(x, y)
+        r = search(*CAMPUS, x, y) if rev else search(x, y)
         if "error" in r:
             print(name, "오류", r["error"])
             continue
@@ -46,7 +49,7 @@ def main():
         buses = [l.get("busNo") for s in p["subPath"] for l in s.get("lane", [])]
         print(name, p["info"]["totalTime"], "분", buses[:3])
         time.sleep(0.5)
-    path = ROOT / "data" / "lastmile.json"
+    path = ROOT / "data" / ("firstmile.json" if rev else "lastmile.json")
     old = json.loads(path.read_text()) if path.exists() else {}
     old.update(out)
     path.write_text(json.dumps(old, ensure_ascii=False, indent=1), encoding="utf-8")

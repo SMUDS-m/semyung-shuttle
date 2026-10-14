@@ -33,6 +33,9 @@ def main():
     lastmile = ROOT / "data" / "lastmile.json"
     if lastmile.exists():
         data["lastmile"] = json.loads(lastmile.read_text())
+    firstmile = ROOT / "data" / "firstmile.json"
+    if firstmile.exists():
+        data["firstmile"] = json.loads(firstmile.read_text())
     transit = ROOT / "data" / "transit.json"
     if transit.exists():
         data["transit"] = json.loads(transit.read_text())
