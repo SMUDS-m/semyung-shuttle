@@ -75,6 +75,10 @@ button{font:inherit;cursor:pointer;border:0}
 .addrlist button{width:100%;text-align:left;padding:10px 12px;min-height:48px;border-radius:10px;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.4}
 .addrlist button small{display:block;color:var(--sub);font-size:13px}
 .pickalt{margin:8px 0 0;font-size:14px;color:var(--sub)}
+.reserve{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14.5px;line-height:1.55;display:grid;gap:8px}
+.about .reserve{margin:0 0 12px}
+details.rt .reserve{margin:0 0 12px}
+.links a.tong{background:var(--brand);color:var(--brand-ink)}
 .linkbtn{background:none;padding:4px 2px;color:var(--brand);font-weight:800;font-size:14px;text-decoration:underline}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .rtbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:0 0 10px;padding:10px;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:14px;text-decoration:none}
@@ -342,6 +346,8 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
   거리는 직선거리에 1.3을 곱한 어림값이고, 걷는 시간은 분당 67m로 계산했어요.
   운행은 학사일정·승차인원에 따라 바뀔 수 있으니 <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>와 세명통통 앱 알림을 확인하세요.
   <br>자료: <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a> · 학교 공식 서비스가 아닙니다.</p>
+  <div class="reserve">하교 버스(잠실·원주·충주 막차 이전) 시간 예약과 운행 변경 알림은 <b>세명통통 2.0</b> 앱에서 해요. 알림을 켜 두세요.
+    <div class="links" id="tongAbout"></div></div>
   <address>
     <b>세명대학교 재난안전학과</b><br>
     27136 충청북도 제천시 세명로 65 (신월동) 이공학관 117호<br>
@@ -463,6 +469,23 @@ function describe({ r, s, i, k }, now) {
 
 // 카카오맵 자동차 길찾기: 탑승 정류장 → 뒤 정류장들을 경유(최대 5곳) → 세명대
 const KAKAO_MAX_VIA = 5;
+// ---- 세명통통 2.0 (하교 막차 이전 차량 예약) ----
+const TONG = {
+  android: "com.sz.pns.semyunghaksa",
+  play: "https://play.google.com/store/apps/details?id=com.sz.pns.semyunghaksa&hl=ko",
+  ios: "https://apps.apple.com/kr/app/id1296133307",
+};
+const RESERVE_ROUTES = ["jamsil", "wonju", "chungju"];
+// 안드로이드는 깔려 있으면 앱을, 없으면 구글플레이를 연다. 아이폰은 앱스토어(깔려 있으면 '열기').
+function tongLinks(label = "📱 세명통통 2.0 열기") {
+  const ua = navigator.userAgent;
+  if (/Android/i.test(ua))
+    return `<a class="tong" href="intent://#Intent;package=${TONG.android};S.browser_fallback_url=${encodeURIComponent(TONG.play)};end">${label}</a>`;
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
+    return `<a class="tong" href="${TONG.ios}" target="_blank" rel="noopener">${label}</a>`;
+  return `<a class="tong" href="${TONG.play}" target="_blank" rel="noopener">📱 세명통통 2.0 (구글플레이)</a><a class="tong" href="${TONG.ios}" target="_blank" rel="noopener">📱 세명통통 2.0 (앱스토어)</a>`;
+}
+
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
 let sdir = "go", tdir = "go";
 function updatePlanFrom() {
@@ -604,6 +627,7 @@ function renderBackResults() {
       <div class="state ${d.cls}">${d.state}</div>
       ${!d.ended && d.canWalk ? `<div class="back">도착할 곳까지 ${fmt(d.home)} 무렵 도착 예상</div>` : ""}
       ${d.note ? `<div class="back">${esc(d.note)}</div>` : ""}
+      ${d.reserve ? `<div class="reserve">막차 이전 차량은 <b>탑승 당일 11:20~13:00</b>에 세명통통 앱으로 시간 예약해요.<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}
       <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">📋 ${esc(x.r.name)} 노선 시간표</button><a href="${busBackLink(x.r, x.i)}" target="_blank" rel="noopener">🚌 하교 경로(카카오맵)</a><a href="${walkHome}" target="_blank" rel="noopener">내려서 집까지 길찾기</a></div>
     </article>`;
   }).join("");
@@ -850,7 +874,8 @@ function routeBackHtml(r) {
       <a class="rtbtn" href="${busBackLink(r, seq.length - 1)}" target="_blank" rel="noopener">🗺️ 카카오맵으로 하교 경로 보기</a>
       <ol class="line"><li class="school"><span>세명대 문화관 앞 출발<em>민송도서관 뒤편 주차장</em></span><time>${mt.join(" · ")}</time></li>${rows}</ol>
       ${fr ? `<p class="note">금요일은 ${fr.join(" · ")} 출발이에요.</p>` : ""}
-      <p class="note">${esc(r.back.note)}</p></details>`;
+      <p class="note">${esc(r.back.note)}</p>
+      ${RESERVE_ROUTES.includes(r.id) ? `<div class="reserve">막차 이전 차량 예약: 탑승 당일 11:20~13:00, 세명통통 앱 → 통학버스 → 버스예약신청<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}</details>`;
 }
 
 // ---- 다른 교통편 ----
@@ -1136,6 +1161,7 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
   renderToday(); renderLists(); bindTransit();
+  $("#tongAbout").innerHTML = tongLinks();
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
   $("#results").addEventListener("click", e => { const b = e.target.closest(".go-route"); if (b) showRoute(b.dataset.id); });
   document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) showView(b.dataset.view, true); });
