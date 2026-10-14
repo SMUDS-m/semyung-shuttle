@@ -9,7 +9,7 @@
 <meta property="og:title" content="세명대 통학 길잡이">
 <meta property="og:description" content="가까운 통학버스 정류장과 출발·도착 시각을 한 번에">
 <meta property="og:url" content="https://smuds-m.github.io/semyung-shuttle/">
-<meta name="theme-color" content="#173f7a">
+<meta name="theme-color" content="#005dab">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
 /* 노선도 = 지하철 노선도 문법: 흰 바탕, 굵은 색 선, 정류장은 흰 속 원 */
@@ -244,6 +244,58 @@ th,td{padding:10px 8px}
 main,.view,.results,#planOut,.bar-in{grid-template-columns:minmax(0,1fr)}
 main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 @media (min-width:600px){.card{padding:20px}}
+
+/* ---- 세명통통 2.0 스타일: 파란 머리 바(#005DAB) · 밑줄 탭 · 연회색 바탕 · 각진 흰 카드 · 메트로 타일 색 ---- */
+:root{
+  --brand:#005dab;--bg:#f3f3f3;--card:#fff;--soft:#eaf2fa;--line:#e2e2e2;--ink:#222831;--sub:#6b7280;
+  --hdr:#005dab;--hdr-ink:#fff;--strip:#fff;
+  --t-teal:#12b5b0;--t-blue:#297fb8;--t-purple:#9142eb;--t-violet:#b662db;--t-green:#79ab0e;--t-sky:#3488ea;--t-orange:#f29c11;--t-pink:#e16877;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --brand:#5aa7ef;--bg:#121417;--card:#1c2026;--soft:#1f2b3a;--line:#2b313a;--ink:#e9edf2;--sub:#a3acb9;
+  --hdr:#0b4f8f;--hdr-ink:#fff;--strip:#1c2026;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --brand:#5aa7ef;--bg:#121417;--card:#1c2026;--soft:#1f2b3a;--line:#2b313a;--ink:#e9edf2;--sub:#a3acb9;
+  --hdr:#0b4f8f;--hdr-ink:#fff;--strip:#1c2026;color-scheme:dark}
+.appbar{background:var(--hdr);color:var(--hdr-ink);border-bottom:0;padding-bottom:0;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.appbar .bar-in{gap:8px}
+.titlerow{flex-direction:column;justify-content:center;gap:6px}
+.appbar h1{color:var(--hdr-ink);font-size:19px;letter-spacing:-.3px;text-align:center}
+.today{background:rgba(255,255,255,.16);color:#fff;font-weight:700}
+.today.off{background:rgba(255,255,255,.16);color:#ffd5d5}
+/* 탭: 파란 바 아래 흰 띠 + 파란 밑줄 */
+.tabs{background:var(--strip);gap:0;margin:0 -16px;padding:0 8px;box-shadow:0 0 0 100vmax var(--strip);clip-path:inset(0 -100vmax)}
+.tabs button{background:transparent;border:0;border-radius:0;border-bottom:3px solid transparent;color:var(--sub);min-height:46px;font-weight:700}
+.tabs button[aria-selected="true"]{background:transparent;color:var(--brand);border-bottom-color:var(--brand);font-weight:800}
+/* 카드·버튼: 각지고 평평하게 */
+.card{border:0;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h2{font-size:18px}
+.btn{border-radius:4px}
+.btn:not(.ghost){background:var(--brand);color:#fff}
+.btn.ghost{background:var(--soft);color:var(--brand)}
+.addr input{border-radius:4px}
+.res,.opt,.hub{border-radius:4px;border-color:var(--line)}
+.links a,.res .links button,.rtbtn,.reserve,.from,.addrlist button{border-radius:4px}
+.links a.tong{background:var(--t-violet);color:#fff}
+/* 정류장 카드 숫자 칸 = 세명통통 타일 */
+.fact{border-radius:2px;color:#fff}
+.fact:nth-child(1){background:var(--t-teal)}
+.fact:nth-child(2){background:var(--t-blue)}
+.fact:nth-child(3){background:var(--t-purple)}
+.fact small,.fact span{color:rgba(255,255,255,.88)}
+.fact b{color:#fff}
+/* 시간표 탭도 밑줄 탭 */
+.seg{background:transparent;padding:0;border-bottom:1px solid var(--line);border-radius:0;gap:0}
+.seg button{border-radius:0;border-bottom:3px solid transparent;background:transparent}
+.seg button[aria-selected="true"],.seg button[aria-pressed="true"]{background:transparent;box-shadow:none;color:var(--brand);border-bottom-color:var(--brand)}
+.seg.small{border-bottom:0}
+.seg.small button{border:1px solid var(--line);margin-right:-1px}
+.seg.small button[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.kind.ktx{background:var(--brand);color:#fff}
+.tt tr.next td:first-child{box-shadow:inset 4px 0 0 var(--brand)}
+/* 아래 바: 세명통통 첫 화면 아래처럼 차분하게 */
+.appfoot{background:var(--card)}
+.fhome{border-radius:4px}
 </style>
 </head>
 <body>
