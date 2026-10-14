@@ -267,6 +267,15 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 .tabs{background:var(--strip);gap:0;margin:0 -16px;padding:0 8px;box-shadow:0 0 0 100vmax var(--strip);clip-path:inset(0 -100vmax)}
 .tabs button{background:transparent;border:0;border-radius:0;border-bottom:3px solid transparent;color:var(--sub);min-height:46px;font-weight:700}
 .tabs button[aria-selected="true"]{background:transparent;color:var(--brand);border-bottom-color:var(--brand);font-weight:800}
+/* 등교(아침 주황) · 하교(저녁 보라) 글자색 — 선택한 탭 밑줄도 같은 색 */
+:root{--go:#b45309;--back:#7e22ce}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--go:#fbbf24;--back:#c4b5fd}}
+:root[data-theme="dark"]{--go:#fbbf24;--back:#c4b5fd}
+.tabs button b{font-weight:900}
+.tabs button.t-go b{color:var(--go)}
+.tabs button.t-back b{color:var(--back)}
+.tabs button.t-go[aria-selected="true"]{border-bottom-color:var(--go)}
+.tabs button.t-back[aria-selected="true"]{border-bottom-color:var(--back)}
 /* 카드·버튼: 각지고 평평하게 */
 .card{border:0;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
 .card h2{font-size:18px}
@@ -306,10 +315,10 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
       <div class="today" id="today">오늘 운행 여부 확인 중</div>
     </div>
     <nav class="tabs" role="tablist" aria-label="보기 선택">
-  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true">등교 셔틀</button>
-  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false">하교 셔틀</button>
-  <button type="button" role="tab" id="tab-transit" data-view="tgo" aria-controls="view-transit" aria-selected="false">등교 대중교통</button>
-  <button type="button" role="tab" id="tab-tback" data-view="tback" aria-controls="view-transit" aria-selected="false">하교 대중교통</button>
+  <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true" class="t-go"><b>등교</b> 셔틀</button>
+  <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false" class="t-back"><b>하교</b> 셔틀</button>
+  <button type="button" role="tab" id="tab-transit" data-view="tgo" aria-controls="view-transit" aria-selected="false" class="t-go"><b>등교</b> 대중교통</button>
+  <button type="button" role="tab" id="tab-tback" data-view="tback" aria-controls="view-transit" aria-selected="false" class="t-back"><b>하교</b> 대중교통</button>
 </nav>
   </div>
 </header>
