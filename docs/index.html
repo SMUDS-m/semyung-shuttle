@@ -75,7 +75,8 @@ button{font:inherit;cursor:pointer;border:0}
 .addrlist button{width:100%;text-align:left;padding:10px 12px;min-height:48px;border-radius:10px;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.4}
 .addrlist button small{display:block;color:var(--sub);font-size:13px}
 .pickalt{margin:8px 0 0;font-size:14px;color:var(--sub)}
-.reserve{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14.5px;line-height:1.55;display:grid;gap:8px}
+.reserve{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14.5px;line-height:1.55}
+.reserve>.links{margin-top:8px}
 .about .reserve{margin:0 0 12px}
 details.rt .reserve{margin:0 0 12px}
 .links a.tong{background:var(--brand);color:var(--brand-ink)}
@@ -412,7 +413,7 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
   거리는 직선거리에 1.3을 곱한 어림값이고, 걷는 시간은 분당 67m로 계산했어요.
   운행은 학사일정·승차인원에 따라 바뀔 수 있으니 <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>와 세명통통 앱 알림을 확인하세요.
   <br>자료: <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a> · 학교 공식 서비스가 아닙니다.</p>
-  <div class="reserve">하교 버스(잠실·원주·충주 막차 이전) 시간 예약과 운행 변경 알림은 <b>세명통통 2.0</b> 앱에서 해요. 알림을 켜 두세요.
+  <div class="reserve">하교 버스 예약과 운행 알림은 <b>세명통통 2.0</b>에서 받아요.
     <div class="links" id="tongAbout"></div></div>
   <address>
     <b>세명대학교 재난안전학과</b><br>
@@ -718,7 +719,7 @@ function renderBackResults() {
       <div class="state ${d.cls}">${d.state}</div>
       ${!d.ended && d.canWalk ? `<div class="back">도착할 곳까지 ${fmt(d.home)} 무렵 도착 예상</div>` : ""}
       ${d.note ? `<div class="back">${esc(d.note)}</div>` : ""}
-      ${d.reserve ? `<div class="reserve">막차 이전 차량은 <b>탑승 당일 11:20~13:00</b>에 세명통통 앱으로 시간 예약해요.<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}
+      ${d.reserve ? `<div class="reserve">막차 이전 차량은 당일 <b>11:20~13:00</b> 세명통통 예약<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}
       <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">📋 ${esc(x.r.name)} 노선 시간표</button><a href="${busBackLink(x.r, x.i)}" target="_blank" rel="noopener">🚌 하교 경로(카카오맵)</a><a href="${walkHome}" target="_blank" rel="noopener">내려서 집까지 길찾기</a></div>
     </article>`;
   }).join("");
@@ -966,7 +967,7 @@ function routeBackHtml(r) {
       <ol class="line"><li class="school"><span>세명대 문화관 앞 출발<em>민송도서관 뒤편 주차장</em></span><time>${mt.join(" · ")}</time></li>${rows}</ol>
       ${fr ? `<p class="note">금요일은 ${fr.join(" · ")} 출발이에요.</p>` : ""}
       <p class="note">${esc(r.back.note)}</p>
-      ${RESERVE_ROUTES.includes(r.id) ? `<div class="reserve">막차 이전 차량 예약: 탑승 당일 11:20~13:00, 세명통통 앱 → 통학버스 → 버스예약신청<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}</details>`;
+      ${RESERVE_ROUTES.includes(r.id) ? `<div class="reserve">막차 이전 차량은 당일 <b>11:20~13:00</b> 세명통통에서 예약<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}</details>`;
 }
 
 // ---- 다른 교통편 ----
