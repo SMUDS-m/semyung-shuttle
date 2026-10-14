@@ -79,6 +79,11 @@ button{font:inherit;cursor:pointer;border:0}
 .about .reserve{margin:0 0 12px}
 details.rt .reserve{margin:0 0 12px}
 .links a.tong{background:var(--brand);color:var(--brand-ink)}
+.links.book{margin-top:6px}
+.links a.bk{background:#fff4e5;color:#9a4a00;border:1px solid #f5d3a6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .links a.bk{background:#3a2a14;color:#ffcf8a;border-color:#5c4320}}
+:root[data-theme="dark"] .links a.bk{background:#3a2a14;color:#ffcf8a;border-color:#5c4320}
+.legs .links.book a{min-height:38px;font-size:13.5px}
 .linkbtn{background:none;padding:4px 2px;color:var(--brand);font-weight:800;font-size:14px;text-decoration:underline}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .rtbtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:0 0 10px;padding:10px;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:14px;text-decoration:none}
@@ -476,14 +481,39 @@ const TONG = {
   ios: "https://apps.apple.com/kr/app/id1296133307",
 };
 const RESERVE_ROUTES = ["jamsil", "wonju", "chungju"];
-// 안드로이드는 깔려 있으면 앱을, 없으면 구글플레이를 연다. 아이폰은 앱스토어(깔려 있으면 '열기').
-function tongLinks(label = "📱 세명통통 2.0 열기") {
+// 앱 열기: 안드로이드는 깔려 있으면 앱을, 없으면 구글플레이를 연다. 아이폰은 앱스토어(깔려 있으면 '열기').
+const platform = () => {
   const ua = navigator.userAgent;
-  if (/Android/i.test(ua))
-    return `<a class="tong" href="intent://#Intent;package=${TONG.android};S.browser_fallback_url=${encodeURIComponent(TONG.play)};end">${label}</a>`;
-  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1))
-    return `<a class="tong" href="${TONG.ios}" target="_blank" rel="noopener">${label}</a>`;
+  if (/Android/i.test(ua)) return "android";
+  if (/iPhone|iPad|iPod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "ios";
+  return "pc";
+};
+const playUrl = pkg => `https://play.google.com/store/apps/details?id=${pkg}&hl=ko`;
+const iosUrl = id => `https://apps.apple.com/kr/app/id${id}`;
+function appLink(app, label, cls = "tong") {
+  const pf = platform();
+  if (pf === "android")
+    return `<a class="${cls}" href="intent://#Intent;package=${app.android};S.browser_fallback_url=${encodeURIComponent(app.web || playUrl(app.android))};end">${label}</a>`;
+  if (pf === "ios") return `<a class="${cls}" href="${iosUrl(app.ios)}" target="_blank" rel="noopener">${label}</a>`;
+  return `<a class="${cls}" href="${app.web || playUrl(app.android)}" target="_blank" rel="noopener">${label}</a>`;
+}
+function tongLinks(label = "📱 세명통통 2.0 열기") {
+  if (platform() !== "pc") return appLink({ android: TONG.android, ios: "1296133307", web: TONG.play }, label);
   return `<a class="tong" href="${TONG.play}" target="_blank" rel="noopener">📱 세명통통 2.0 (구글플레이)</a><a class="tong" href="${TONG.ios}" target="_blank" rel="noopener">📱 세명통통 2.0 (앱스토어)</a>`;
+}
+
+// ---- 승차권 예매 바로가기 (예매는 각 앱·사이트에서) ----
+const BOOK = {
+  korail:  { name: "코레일+",       android: "com.korail.talk",    ios: "1000558562", web: "https://www.korail.com" },
+  tmoney:  { name: "티머니GO",      android: "kr.co.tmoney.tia",   ios: "1483433931", web: "https://txbus.t-money.co.kr" },
+  bustago: { name: "버스타고",      android: "com.ebcard.bustago", ios: "966782397",  web: "https://www.bustago.or.kr" },
+  kobus:   { name: "고속버스 티머니", android: "com.kscc.scxb.mbl",  ios: "957276809",  web: "https://www.kobus.co.kr" },
+};
+// trafficType 4 기차 / 5 고속버스 / 6 시외버스
+function bookLinks(type) {
+  const keys = type === 4 ? ["korail"] : type === 5 ? ["kobus", "tmoney"] : ["tmoney", "bustago"];
+  const pc = platform() === "pc";
+  return `<div class="links book">${keys.map(k => appLink(BOOK[k], `🎫 ${BOOK[k].name}${pc ? " 예매(웹)" : " 예매"}`, "bk")).join("")}</div>`;
 }
 
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
@@ -928,12 +958,15 @@ function renderTransit() {
     `</table></div>` : `<p class="note">이 방향 운행 정보가 없어요.</p>`;
   const label = r => `<b>${r.dep}</b> (${r.kind}${r.no ? " " + r.no : ""})`;
   const nextText = !rows.length ? "운행 정보 없음" : next >= 0 ? `다음 출발 ${label(rows[next])}` : `오늘 남은 차편이 없어요 · 내일 첫차 ${label(rows[0])}`;
-  $("#trBody").innerHTML = `<p class="sum">${esc(a)} → ${esc(b)} · 하루 ${rows.length}회 · ${nextText}${fares.length ? `<br>요금(어른) ${won(Math.min(...fares))}${Math.max(...fares) > Math.min(...fares) ? " ~ " + won(Math.max(...fares)) : ""}` : ""}</p>${body}
+  $("#trBody").innerHTML = `<p class="sum">${esc(a)} → ${esc(b)} · 하루 ${rows.length}회 · ${nextText}${fares.length ? `<br>요금(어른) ${won(Math.min(...fares))}${Math.max(...fares) > Math.min(...fares) ? " ~ " + won(Math.max(...fares)) : ""}` : ""}</p>
+    ${bookLinks(tr.tab === "train" ? 4 : 6)}${body}
     ${tr.dir === "to_jecheon" ? hubBox(T.hubs[tr.tab === "train" ? "station" : "terminal"], "도착 후") : ""}
     ${tr.tab === "bus" ? `<div class="hub"><h3>동서울 ↔ 세명대 직통 (세명학사 앞 정류장)</h3><p>${esc(DATA.intercity.operator)} · ${esc(DATA.intercity.fare)}</p>
       <p>동서울 → 세명대: 일~목 ${DATA.intercity.to_campus.sun_thu.join(" · ")} / 금·토 ${DATA.intercity.to_campus.fri_sat.join(" · ")} (공휴일 포함 매일)</p>
-      <p>세명대 → 동서울: 월~금 ${DATA.intercity.to_seoul.mon_fri.join(" · ")} / 토 ${DATA.intercity.to_seoul.sat.join(" · ")} (일요일·공휴일 미운행)</p></div>` : ""}
-    <p class="note" style="margin-top:10px">${esc(T.source.split(" · ")[0])}, ${esc(T.fetched)} 기준. 예매·변경은 ${tr.tab === "train" ? '<a href="https://www.letskorail.com" target="_blank" rel="noopener">코레일</a>' : '<a href="https://txbus.t-money.co.kr" target="_blank" rel="noopener">티머니 시외버스</a>·<a href="https://www.bustago.or.kr" target="_blank" rel="noopener">버스타고</a>'}에서 확인하세요.</p>`;
+      <p>세명대 → 동서울: 월~금 ${DATA.intercity.to_seoul.mon_fri.join(" · ")} / 토 ${DATA.intercity.to_seoul.sat.join(" · ")} (일요일·공휴일 미운행)</p>
+      <p class="note">💡 재학생 할인가는 학생증을 보여 줘야 해요. 동서울터미널 창구·무인발급기(도착지 '세명대(대)' → 대학생)에서 사면 바로 할인가이고, 온라인으로 사면 정상가라 창구에서 학생증을 보이고 다시 발권해야 해요.</p>
+      ${bookLinks(6)}</div>` : ""}
+    <p class="note" style="margin-top:10px">${esc(T.source.split(" · ")[0])}, ${esc(T.fetched)} 기준. 시각·요금은 바뀔 수 있으니 예매할 때 다시 확인하세요.</p>`;
 }
 
 function bindTransit() {
@@ -1080,7 +1113,7 @@ async function planIntercity(origin, leg, dest, nowMin, back) {
     total: arrive - leave, arrive, leave, fare, tomorrow,
     html: `<div class="opt"><div class="head"><b>${tomorrow ? "내일 " : ""}${fmt(leave)} 출발 → ${fmt(arrive)} 도착</b><span>약 ${durText(fmt(arrive - leave))} · ${won(fare)}</span></div>
       <ol class="legs">${legLines(first, leave)}
-      <li><i>${ICON[leg.trafficType]}</i><span><span class="no" style="--lc:#173f7a">${esc(run?.name || KIND[leg.trafficType])}</span> ${esc(leg.startName)} → ${esc(leg.endName)}<small>${run ? `${run.dep} 출발 · ${run.arr} 도착${later.length ? " · 다음 " + later.join(", ") : ""}` : "시각표 정보 없음 · 예매 사이트에서 확인"}</small></span><time>${run ? run.dep : leg.sectionTime + "분"}</time></li>
+      <li><i>${ICON[leg.trafficType]}</i><span><span class="no" style="--lc:#173f7a">${esc(run?.name || KIND[leg.trafficType])}</span> ${esc(leg.startName)} → ${esc(leg.endName)}<small>${run ? `${run.dep} 출발 · ${run.arr} 도착${later.length ? " · 다음 " + later.join(", ") : ""}` : "시각표 정보 없음 · 예매 앱에서 확인"}</small>${bookLinks(leg.trafficType)}</span><time>${run ? run.dep : leg.sectionTime + "분"}</time></li>
       ${legLines(last, arrHub)}
       <li><i>${back ? "🏠" : "🏫"}</i><span>${back ? "집 도착" : "세명대 도착"}</span><time>${fmt(arrive)}</time></li></ol></div>`
   };
