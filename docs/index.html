@@ -75,6 +75,7 @@ button{font:inherit;cursor:pointer;border:0}
 .addrlist button{width:100%;text-align:left;padding:10px 12px;min-height:48px;border-radius:10px;background:var(--soft);color:var(--ink);font-size:15px;line-height:1.4}
 .addrlist button small{display:block;color:var(--sub);font-size:13px}
 .pickalt{margin:8px 0 0;font-size:14px;color:var(--sub)}
+.orline{margin:14px 0 6px;font-size:14px;color:var(--sub);text-align:center}
 .reserve{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14.5px;line-height:1.55}
 .reserve>.links{margin-top:8px}
 .about .reserve{margin:0 0 12px}
@@ -374,19 +375,20 @@ document.addEventListener('click',function(e){
 <div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" data-dir="go" hidden>
   <section class="card" aria-labelledby="h-plan">
     <h2 id="h-plan">세명대까지 대중교통 길찾기</h2>
-    <p class="note" id="planIntro">셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.</p>
-    <form class="addr back-only" id="addrFormT" autocomplete="off">
+    <p class="note" id="planIntro">집에서 세명대까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣거나 내 위치로 출발지를 정해 주세요.</p>
+    <form class="addr" id="addrFormT" autocomplete="off">
       <label class="sr" for="homeAddrT">집 주소</label>
       <input id="homeAddrT" type="search" enterkeyhint="search" placeholder="예: 서울 동대문구 회기동 ○○아파트">
       <button class="btn" type="submit">🔍 찾기</button>
     </form>
-    <ul class="addrlist back-only" id="addrListT" aria-live="polite"></ul>
+    <ul class="addrlist" id="addrListT" aria-live="polite"></ul>
     <p class="back-only pickalt">주소가 안 나오면 <button type="button" class="linkbtn js-pick" aria-pressed="false">지도에서 집 고르기</button></p>
+    <p class="go-only orline">또는 지금 있는 곳에서 출발</p>
     <div class="find go-only">
       <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
-    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
+    <p class="msg js-msg">입력한 주소와 위치는 경로 찾기에만 쓰고 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-transit"></div>
     <div class="from" id="planFrom">출발지를 먼저 정해 주세요.</div>
     <button class="btn" id="planBtn" type="button" disabled>🧭 세명대까지 경로 찾기</button>
@@ -598,9 +600,12 @@ function bookLinks(type) {
 
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
 let sdir = "go", tdir = "go";
+let tsrc = "me";   // 등교 대중교통 출발지: 내 위치(me) 또는 집 주소(home) 중 마지막으로 정한 것
+function goFrom() { return (tsrc === "home" || !me) ? home : me; }
 function updatePlanFrom() {
-  const go = tdir === "go", p = go ? me : home;
-  $("#planFrom").innerHTML = p ? `${go ? "출발지" : "도착지(집)"}: <b>${esc(p.label || "고른 위치")}</b>` : (go ? "출발지를 먼저 정해 주세요." : "집 주소를 먼저 넣어 주세요.");
+  const go = tdir === "go", p = go ? goFrom() : home;
+  const what = go ? (p && p === home ? "출발지(집)" : "출발지") : "도착지(집)";
+  $("#planFrom").innerHTML = p ? `${what}: <b>${esc(p.label || "고른 위치")}</b>` : (go ? "집 주소를 넣거나 내 위치로 출발지를 정해 주세요." : "집 주소를 먼저 넣어 주세요.");
   $("#planBtn").disabled = !p;
 }
 function setTDir(d) {
@@ -610,10 +615,10 @@ function setTDir(d) {
   const back = d === "back";
   $("#h-plan").textContent = back ? "집까지 대중교통 길찾기" : "세명대까지 대중교통 길찾기";
   $("#planIntro").textContent = back ? "학교에서 집까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣어 주세요."
-                                     : "셔틀이 없는 시간·지역이라면 버스·지하철·기차로 가는 경로와 시간을 찾아요.";
+                                     : "집에서 세명대까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣거나 내 위치로 출발지를 정해 주세요.";
   $("#planBtn").textContent = back ? "🧭 집까지 경로 찾기" : "🧭 세명대까지 경로 찾기";
   $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
-  setMsg(back ? (home ? "저장한 집이 있어요. 아래 버튼으로 집까지 경로를 찾아보세요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요." : "입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.") : "위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "transit");
+  setMsg(back ? (home ? "저장한 집이 있어요. 아래 버튼으로 집까지 경로를 찾아보세요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요." : "입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.") : "입력한 주소와 위치는 경로 찾기에만 쓰고 이 기기에만 기억해 둬요.", false, "transit");
   updatePlanFrom();
   tr.dir = back ? "from_jecheon" : "to_jecheon";
   renderTransit();
@@ -625,7 +630,9 @@ function setHome(lat, lng, label) {
   try { localStorage.setItem("shuttle-addr", JSON.stringify(home)); } catch {}
   $("#addrList").innerHTML = ""; $("#addrListT").innerHTML = "";
   ["#homeAddr", "#homeAddrT"].forEach(s => { if (label) $(s).value = label; });
-  if (tdir === "back") { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; setMsg("집을 정했어요. 아래 버튼으로 집까지 경로를 찾아보세요.", false, "transit"); }
+  if (view === "transit" && tdir === "go") tsrc = "home";
+  if (view === "transit") { $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
+    setMsg(tdir === "back" ? "집을 정했어요. 아래 버튼으로 집까지 경로를 찾아보세요." : "집을 출발지로 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit"); }
   updatePlanFrom();
   renderResults(); placeMap();
 }
@@ -810,7 +817,7 @@ function renderResults() {
 
 function setMe(lat, lng, label, quiet) {
   me = { lat, lng, label };
-  if (!quiet) try { localStorage.setItem("shuttle-home", JSON.stringify(me)); } catch {}
+  if (!quiet) { tsrc = "me"; try { localStorage.setItem("shuttle-home", JSON.stringify(me)); } catch {} }
   if (tdir === "go") { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; }
   updatePlanFrom();
   if (tr.tab === "city") renderTransit();
@@ -1294,7 +1301,7 @@ fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d =>
   if (sdir === "back") renderResults();
   document.querySelectorAll(".js-locate").forEach(b => b.addEventListener("click", locate));
   document.querySelectorAll(".js-pick").forEach(b => b.addEventListener("click", togglePick));
-  $("#planBtn").addEventListener("click", () => tdir === "back" ? (home && plan(home, true)) : (me && plan(me)));
+  $("#planBtn").addEventListener("click", () => tdir === "back" ? (home && plan(home, true)) : (goFrom() && plan(goFrom())));
   setInterval(renderResults, 60000);
 }).catch(() => setMsg("노선 자료를 불러오지 못했어요. 새로고침해 주세요.", true));
 </script>
