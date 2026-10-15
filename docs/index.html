@@ -42,10 +42,24 @@ main{max-width:720px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px ca
 .appfoot .bar-in{display:flex;align-items:center;gap:10px}
 .appfoot .deptlogo{padding:4px 8px;border-radius:8px}
 .appfoot .deptlogo img{height:26px}
+.ticker{overflow:hidden;white-space:nowrap;font-size:13px;line-height:24px;border-radius:6px;background:rgba(0,0,0,.18);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent);mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
+.tk-in{display:inline-block;padding-left:100%;animation:tk var(--tkdur,40s) linear infinite}
+.ticker:hover .tk-in,.ticker:focus-within .tk-in{animation-play-state:paused}
+.tk-in a{color:#fff;text-decoration:none;margin-right:28px}
+.tk-in b{display:inline-block;margin-right:5px;padding:0 6px;border-radius:4px;font-size:11px;line-height:17px;color:#fff;background:rgba(255,255,255,.25)}
+.tk-in b.k-특보,.tk-in b.k-문자{background:#dc2626}
+.tk-in b.k-예비특보{background:#ea580c}
+@keyframes tk{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion:reduce){.tk-in{animation:none;padding-left:0}}
 .ftxt{display:grid;font-size:13px;line-height:1.35;color:var(--sub);min-width:0}
 .ftxt a{color:var(--ink);font-weight:800;text-decoration:none;display:inline-block;padding:6px 0;margin:-6px 0}
 .fhome{margin-left:auto;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;white-space:nowrap}
-.dinner .rtbtn{margin:0}
+.dinnerbar{display:flex;align-items:center;gap:12px;margin:0;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#ff6b3d,#ffb03a);color:#fff;text-decoration:none;box-shadow:0 4px 12px rgba(255,107,61,.3)}
+.dinnerbar .ico{font-size:28px;line-height:1}
+.dinnerbar .t{flex:1;display:flex;flex-direction:column;gap:2px}
+.dinnerbar b{font-size:17px;font-weight:800;color:#fff}
+.dinnerbar small{font-size:13px;color:#fff;opacity:.95}
+.dinnerbar .go{font-size:20px;font-weight:800}
 .about address{font-style:normal;font-size:14.5px;line-height:1.7;color:var(--sub)}
 .about address b{color:var(--ink)}
 .about a{color:var(--brand)}
@@ -76,6 +90,24 @@ button{font:inherit;cursor:pointer;border:0}
 .addrlist button small{display:block;color:var(--sub);font-size:13px}
 .pickalt{margin:8px 0 0;font-size:14px;color:var(--sub)}
 .orline{margin:14px 0 6px;font-size:14px;color:var(--sub);text-align:center}
+.golive{display:block;margin-top:4px;font-size:13px}
+.when{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.when>span{flex-basis:100%;font-size:14px;font-weight:800;color:var(--sub)}
+.when .seg{flex:1 1 100%;min-width:0}
+.when input{font:inherit;font-size:16px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.live{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:6px}
+.live li{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.live li.other{opacity:.6}
+.live .no{flex:0 0 auto;min-width:38px;text-align:center;font-weight:800;font-size:15px;padding:4px 8px;border-radius:8px;color:#fff;background:var(--lc,#3d6fd1)}
+.live .where{flex:1;min-width:0;font-size:13px;color:var(--sub)}
+.live .where b{display:block;font-size:15px;color:var(--ink)}
+.live time{font-weight:800;font-size:17px;color:var(--brand);white-space:nowrap}
+.live li.soon time{color:#c2410c}
+.live .more{justify-content:center;font-size:14px;color:var(--sub);cursor:pointer;background:var(--soft)}
+.liveat{margin:8px 0 0;font-size:13px;color:var(--sub);text-align:right}
+.aboutlist{margin:4px 0 12px;padding-left:18px;font-size:14px;line-height:1.6;color:var(--sub)}
+.aboutlist li{margin:2px 0}
+.aboutlist b{color:var(--ink,inherit);margin-right:4px}
 .reserve{margin:2px 0 0;padding:10px 12px;border-radius:12px;background:var(--soft);font-size:14.5px;line-height:1.55}
 .reserve>.links{margin-top:8px}
 .about .reserve{margin:0 0 12px}
@@ -333,6 +365,7 @@ document.addEventListener('click',function(e){
       <h1>세명대 통학 길잡이</h1>
       <div class="today" id="today">오늘 운행 여부 확인 중</div>
     </div>
+    <div class="ticker" id="ticker" hidden aria-label="재난 소식"><div class="tk-in" id="tkIn"></div></div>
     <nav class="tabs" role="tablist" aria-label="보기 선택">
   <button type="button" role="tab" id="tab-go" data-view="go" aria-controls="view-shuttle" aria-selected="true" class="t-go"><b>등교</b> 셔틀</button>
   <button type="button" role="tab" id="tab-back" data-view="back" aria-controls="view-shuttle" aria-selected="false" class="t-back"><b>하교</b> 셔틀</button>
@@ -343,6 +376,9 @@ document.addEventListener('click',function(e){
 </header>
 
 <main>
+<a class="dinnerbar" href="https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link" target="_blank" rel="noopener" id="mealBar" aria-label="점심 메뉴 룰렛 열기">
+  <span class="ico">🍽️</span><span class="t"><b id="mealT">오늘 학교 가서 점심 뭐 먹지?</b><small id="mealS">점심 메뉴 룰렛 돌리기</small></span><span class="go">→</span>
+</a>
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-go" data-dir="go">
   <section class="card" aria-labelledby="h-find">
@@ -391,11 +427,27 @@ document.addEventListener('click',function(e){
     <p class="msg js-msg">입력한 주소와 위치는 경로 찾기에만 쓰고 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-transit"></div>
     <div class="from" id="planFrom">출발지를 먼저 정해 주세요.</div>
+    <div class="when"><span>언제</span>
+      <div class="seg small" id="planWhen">
+        <button type="button" data-w="now" aria-pressed="true">지금</button>
+        <button type="button" data-w="preset" aria-pressed="false" id="planPreset">내일 아침 7시</button>
+        <button type="button" data-w="pick" aria-pressed="false">시각 지정</button>
+      </div>
+      <input type="time" id="planTime" value="08:00" step="600" hidden aria-label="출발 시각">
+    </div>
     <button class="btn" id="planBtn" type="button" disabled>🧭 세명대까지 경로 찾기</button>
     <p class="note" id="planNote"></p>
     <div id="planOut" aria-live="polite"></div>
   </section>
 
+
+  <section class="card" aria-labelledby="h-live">
+    <h2 id="h-live">🚏 제천 시내버스 실시간 도착</h2>
+    <p class="note" id="liveIntro"></p>
+    <div class="seg" id="liveStops"></div>
+    <ul class="live" id="liveList" aria-live="polite"></ul>
+    <p class="liveat"><span id="liveAt"></span> <button type="button" class="linkbtn" id="liveRefresh">↻ 새로고침</button></p>
+  </section>
 
   <section class="card" aria-labelledby="h-tr">
     <h2 id="h-tr">기차·시외버스·시내버스 시간표</h2>
@@ -421,18 +473,17 @@ document.addEventListener('click',function(e){
   <div id="mapbox" hidden><div id="map" role="region" aria-label="지도"></div></div>
 </div>
 
-<section class="card dinner" aria-label="저녁 메뉴 룰렛">
-  <p class="note">하교하고 저녁은 뭐 먹을지 고민된다면</p>
-  <a class="rtbtn" href="https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link" target="_blank" rel="noopener">🍽️ 오늘 저녁 뭐 먹지? 룰렛 돌리기 →</a>
-</section>
 
 <section class="card about" aria-labelledby="h-about">
   <h2 id="h-about">안내</h2>
-  <p class="note">시간은 모두 학교 공지 시간표 기준이에요. 버스 실시간 위치는 공개되지 않아 알 수 없어요.
-  거리는 직선거리에 1.3을 곱한 어림값이고, 걷는 시간은 분당 67m로 계산했어요.
-  운행은 학사일정·승차인원에 따라 바뀔 수 있으니 <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>와 세명통통 앱 알림을 확인하세요.
-  <br>자료: <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a> · 학교 공식 서비스가 아닙니다.
-  <br>방문 수와 누른 버튼 종류만 Google Analytics로 세요. 위치·주소는 보내지 않아요.</p>
+  <ul class="aboutlist">
+    <li><b>시간</b> 학교 공지 시간표 기준 (버스 실시간 위치는 알 수 없음)</li>
+    <li><b>거리·걷는 시간</b> 어림값 (직선거리×1.3, 분당 67m)</li>
+    <li><b>운행 변경</b> <a href="https://www.semyung.ac.kr/kor/sub05_04_01.do" target="_blank" rel="noopener">학교 공지</a>·세명통통 알림 확인</li>
+    <li><b>자료</b> <span id="src"></span> · <a href="https://github.com/SMUDS-m/semyung-shuttle" target="_blank" rel="noopener">데이터와 코드</a></li>
+    <li><b>방문 통계</b> 방문 수·누른 버튼만 집계 (위치·주소는 보내지 않음)</li>
+    <li>학교 공식 서비스가 아닙니다</li>
+  </ul>
   <div class="reserve">하교 버스 예약과 운행 알림은 <b>세명통통 2.0</b>에서 받아요.
     <div class="links" id="tongAbout"></div></div>
   <address>
@@ -598,6 +649,11 @@ function bookLinks(type) {
   return `<div class="links book">${keys.map(k => appLink(BOOK[k], `🎫 ${BOOK[k].name}${pc ? " 예매(웹)" : " 예매"}`, "bk")).join("")}</div>`;
 }
 
+// 안내 칸의 자료 표기: 공지 이름·날짜만 짧게 (전체 출처는 README·shuttle.json)
+function srcShort() {
+  const m = (DATA.source || "").match(/(\d)학기.*?(\d{4})\.(\d{2})\.(\d{2})/);
+  return (m ? `${m[1]}학기 통학버스 공지(${+m[3]}/${+m[4]})` : "학교 통학버스 공지") + ` · ${DATA.built} 정리`;
+}
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
 let sdir = "go", tdir = "go";
 let tsrc = "me";   // 등교 대중교통 출발지: 내 위치(me) 또는 집 주소(home) 중 마지막으로 정한 것
@@ -617,11 +673,13 @@ function setTDir(d) {
   $("#planIntro").textContent = back ? "학교에서 집까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣어 주세요."
                                      : "집에서 세명대까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣거나 내 위치로 출발지를 정해 주세요.";
   $("#planBtn").textContent = back ? "🧭 집까지 경로 찾기" : "🧭 세명대까지 경로 찾기";
+  presetLabel();
   $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
   setMsg(back ? (home ? "저장한 집이 있어요. 아래 버튼으로 집까지 경로를 찾아보세요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요." : "입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.") : "입력한 주소와 위치는 경로 찾기에만 쓰고 이 기기에만 기억해 둬요.", false, "transit");
   updatePlanFrom();
   tr.dir = back ? "from_jecheon" : "to_jecheon";
   renderTransit();
+  if (DATA && view === "transit") showLive();
 }
 let home = null;   // 하교용 집 위치 {lat, lng, label} — 등교·대중교통용 위치(me)와 따로 기억
 try { const h = JSON.parse(localStorage.getItem("shuttle-addr") || "null"); if (h && h.lat) home = h; } catch {}
@@ -898,6 +956,15 @@ function showView(v, push) {
   if (view === "transit" && (v === "tback" ? "back" : "go") !== tdir) setTDir(v === "tback" ? "back" : "go");
   if (push) history.replaceState(null, "", VIEW_HASH[v] || location.pathname + location.search);
   if (picking && map) togglePick(); else placeMap();
+  setMeal(v === "back" || v === "tback" ? "저녁" : "점심");
+  if (view === "transit") showLive(); else clearTimeout(liveTimer);
+}
+// 등교 탭은 점심, 하교 탭은 저녁 룰렛
+function setMeal(m) {
+  $("#mealT").textContent = m === "저녁" ? "오늘 집에 가서 저녁 뭐 먹지?" : "오늘 학교 가서 점심 뭐 먹지?";
+  $("#mealS").textContent = m === "저녁" ? "하교길 저녁 메뉴 룰렛 돌리기" : "점심 메뉴 룰렛 돌리기";
+  $("#mealBar").setAttribute("aria-label", `${m} 메뉴 룰렛 열기`);
+  $("#mealBar").href = `https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content=${m === "저녁" ? "dinner" : "lunch"}`;
 }
 
 function stopPopup(r, s) {
@@ -962,7 +1029,7 @@ function drawMap() {
 
 function renderLists() {
 
-  if (sdir === "back") { $("#routes").innerHTML = DATA.routes.map(routeBackHtml).join(""); $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`; return; }
+  if (sdir === "back") { $("#routes").innerHTML = DATA.routes.map(routeBackHtml).join(""); $("#src").textContent = srcShort(); return; }
   $("#routes").innerHTML = DATA.routes.map(r => {
     const first = r.stops[0].times;
     const arr = first.map((_, i) => fmt(arriveAt(r, i)));
@@ -974,7 +1041,7 @@ function renderLists() {
       <p class="note">${esc(bt + r.back.note)}</p></details>`;
   }).join("");
 
-  $("#src").textContent = DATA.source + ` (정리 ${DATA.built})`;
+  $("#src").textContent = srcShort();
 }
 
 function routeBackHtml(r) {
@@ -1063,53 +1130,58 @@ function bindTransit() {
   renderTransit();
 }
 
-// ---- 대중교통 길찾기 (ODsay) ----
-const ODSAY_KEY = "bJCBwysNQk8tNXqwvDETAg";
-const ODSAY = "https://api.odsay.com/v1/api/";
+// ---- 대중교통 길찾기 (카카오맵 + 기차·시외버스 시간표) ----
+// 대중교통 경로: 카카오맵 대중교통 API(geoai-na Netlify 함수가 키를 숨겨 대신 부름, 하루 1,000건 무료).
+// 카카오는 시내 구간만 찾고 출발 시각이 없어서, 기차·시외버스는 저장해 둔 시간표(아사마루)로 잇는다.
+// 로컬 미리보기(localhost)에서는 같은 함수를 이 컴퓨터에서 띄운 것(scripts/kroute_dev.js)을 쓴다
+const KROUTE = location.hostname === "localhost" ? "http://localhost:8899/kroute" : "https://geoai-na.netlify.app/.netlify/functions/kroute";
 const ICON = { 1: "🚇", 2: "🚌", 3: "🚶", 4: "🚄", 5: "🚌", 6: "🚌", 7: "✈️" };
 const KIND = { 4: "기차", 5: "고속버스", 6: "시외버스", 7: "항공" };
-const odCache = new Map();
-
-// ODsay 는 동시 호출을 거절하므로 한 번에 하나씩 보낸다.
-let odQueue = Promise.resolve();
-const wait = ms => new Promise(r => setTimeout(r, ms));
-let odQuota = false;
+const krCache = new Map();
+let krQuota = false;
 const LS_TTL = 30 * 60 * 1000;
-function lsGet(k) { try { const v = JSON.parse(localStorage.getItem("od:" + k)); return v && Date.now() - v.t < LS_TTL ? v.r : null; } catch { return null; } }
-function lsSet(k, r) { try { localStorage.setItem("od:" + k, JSON.stringify({ t: Date.now(), r })); } catch {} }
+function lsGet(k) { try { const v = JSON.parse(localStorage.getItem("kr:" + k)); return v && Date.now() - v.t < LS_TTL ? v.r : null; } catch { return null; } }
+function lsSet(k, r) { try { localStorage.setItem("kr:" + k, JSON.stringify({ t: Date.now(), r })); } catch {} }
 const quotaErr = () => Object.assign(new Error("오늘 길찾기 사용 한도가 다 찼어요"), { code: "429" });
-function odsay(api, params) {
-  const q = new URLSearchParams({ ...params, apiKey: ODSAY_KEY });
-  const key = api + "?" + new URLSearchParams(params);
-  if (!odCache.has(key)) {
-    const job = odQueue.then(async () => {
+function kroute(a, b) {
+  const r4 = v => Math.round(v * 1e4) / 1e4;
+  const params = { sx: r4(a.lng), sy: r4(a.lat), ex: r4(b.lng), ey: r4(b.lat) };
+  const key = new URLSearchParams(params).toString();
+  if (!krCache.has(key)) {
+    const job = (async () => {
       const saved = lsGet(key);
       if (saved) return saved;
-      if (odQuota) throw quotaErr();
-      for (let tryNo = 0; ; tryNo++) {
-        const res = await fetch(ODSAY + api + "?" + q).then(r => r.json());
-        if (!res.error) { lsSet(key, res.result); return res.result; }
-        const e = Array.isArray(res.error) ? res.error[0] : res.error;
-        if (String(e.code) === "429") { odQuota = true; throw quotaErr(); }
-        if (tryNo >= 1) throw Object.assign(new Error(e.message || e.msg || "길찾기 오류"), { code: String(e.code) });
-        await wait(600);
-      }
-    });
-    odQueue = job.catch(() => {}).then(() => wait(150));
-    job.catch(() => odCache.delete(key));
-    odCache.set(key, job);
+      if (krQuota) throw quotaErr();
+      const res = await fetch(KROUTE + "?" + key);
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 429 || j.status === "QUOTA") { krQuota = true; throw quotaErr(); }
+      if (!res.ok) throw Object.assign(new Error("길찾기 서버 오류"), { code: String(res.status) });
+      if (j.status === "OK" || j.status === "NO_RESULTS") lsSet(key, j);
+      return j;
+    })();
+    job.catch(() => krCache.delete(key));
+    krCache.set(key, job);
   }
-  return odCache.get(key);
+  return krCache.get(key);
+}
+// 카카오 경로 → 화면이 쓰는 형식(구간 목록). 정류장까지 걷는 시간은 카카오 구간에 빠져 있어 총시간과의 차이를 걷기로 넣는다.
+function kToPath(r) {
+  const sub = r.steps.map(s => s.type === "WALKING" ? { trafficType: 3, sectionTime: s.min, distance: s.m }
+    : { trafficType: s.type === "SUBWAY" ? 1 : 2, sectionTime: s.min, distance: s.m, startName: s.from, endName: s.to,
+        stationCount: s.n, lane: s.names.map(n => ({ busNo: n })) });
+  const rest = r.min - sub.reduce((t, s) => t + s.sectionTime, 0);
+  if (rest >= 2) sub.push({ trafficType: 3, sectionTime: rest, distance: 0 });
+  const walk = sub.filter(s => s.trafficType === 3).reduce((t, s) => t + s.distance, 0);
+  return { info: { totalTime: r.min, payment: r.fare, totalWalk: walk }, subPath: sub };
 }
 
 // 같은 도시 안 경로. 700m 이내 등으로 실패하면 걷기로 대신한다.
 async function cityPath(a, b, hubName, fromCampus) {
-  const r4 = v => Math.round(v * 1e4) / 1e4;
   const pre = fromCampus ? DATA.firstmile : DATA.lastmile;   // 미리 받아 둔 학교 ↔ 역·터미널
   if (hubName && pre?.[hubName]) return pre[hubName];
   try {
-    const r = await odsay("searchPubTransPathT", { SX: r4(a.lng), SY: r4(a.lat), EX: r4(b.lng), EY: r4(b.lat), SearchType: 0 });
-    if (r.searchType === 0 && r.path?.length) return r.path[0];
+    const r = await kroute(a, b);
+    if (r.status === "OK" && r.routes?.length) return kToPath(r.routes[0]);
   } catch (e) {
     if (e.code === "429") return { info: { totalTime: Math.round(km(a, b) * DETOUR / 25 * 60) + 10, payment: 0 }, subPath: [{ trafficType: -1, sectionTime: Math.round(km(a, b) * DETOUR / 25 * 60) + 10, distance: km(a, b) * DETOUR * 1000 }] };
   }
@@ -1131,7 +1203,9 @@ function legLines(path, startMin) {
     const lanes = (s.lane || []).map(l => l.busNo || l.name).filter(Boolean);
     const nums = [...new Set(lanes.map(n => n.split("(")[0]))].slice(0, 4)
       .map(n => `<span class="no" style="--lc:${s.trafficType === 1 ? "#2b8a3e" : "#3d6fd1"}">${esc(n)}</span>`).join(" ") + " ";
-    return `<li><i>${ICON[s.trafficType]}</i><span>${nums}${esc(s.startName)} → ${esc(s.endName)}<small>${s.stationCount ? s.stationCount + "개 정류장 · " : ""}${from} 무렵 탑승</small></span><time>${s.sectionTime}분</time></li>`;
+    // 제천역·터미널·세명대에서 타는 시내버스면 실시간 도착 칸으로 가는 버튼
+    const live = s.trafficType === 2 ? (/^제천역/.test(s.startName) ? "go,0" : /시외버스터미널/.test(s.startName) ? "go,1" : /^세명대/.test(s.startName) ? "back,0" : "") : "";
+    return `<li><i>${ICON[s.trafficType]}</i><span>${nums}${esc(s.startName)} → ${esc(s.endName)}<small>${s.stationCount ? s.stationCount + "개 정류장 · " : ""}${from} 무렵 탑승</small>${live ? `<button type="button" class="linkbtn golive" data-live="${live}">🕒 지금 이 정류장에 몇 분 뒤 오나요?</button>` : ""}</span><time>${s.sectionTime}분</time></li>`;
   }).join("");
 }
 
@@ -1161,23 +1235,24 @@ function staticTimes(s) {
   return null;
 }
 
-async function serviceTimes(s) {
-  const own = staticTimes(s);
-  if (own && own.length) return own;
-  const ids = { startStationID: s.startID, endStationID: s.endID };
-  if (s.trafficType === 4) {
-    const r = await odsay("trainServiceTime", ids);
-    return (r.station || []).map(x => ({ dep: x.departureTime, arr: x.arrivalTime, name: `${x.trainClass} ${x.trainNo}`, fare: +x.fare?.general || s.payment }))
-      .sort((a, b) => toMin(a.dep) - toMin(b.dep));
-  }
-  const r = await odsay(s.trafficType === 5 ? "expressServiceTime" : "intercityServiceTime", ids);
-  const out = [];
-  (r.station || []).forEach(x => {
-    const waste = +x.wasteTime || s.sectionTime;
-    (x.schedule || "").split(",").map(v => v.trim()).filter(v => /^\d\d:\d\d$/.test(v)).forEach(dep =>
-      out.push({ dep, arr: fmt(toMin(dep) + waste), name: KIND[s.trafficType], fare: +x.normalFare || s.payment }));
+function serviceTimes(s) {
+  return Promise.resolve(staticTimes(s) || []);
+}
+
+// 기차·시외버스 후보: 저장한 시간표가 있는 역·터미널 중 출발지(하교면 집)에서 가까운 3곳
+function intercityLegs(place, back) {
+  const T = DATA.transit, out = [];
+  const shortest = rows => Math.min(...rows.map(x => toMin(x.dur || "01:30")));
+  T.train.filter(x => x.lat).forEach(x => out.push({ hub: x, type: 4, jc: T.hubs.station, jcName: "제천", name: x.from,
+    dur: shortest(back ? x.from_jecheon : x.to_jecheon), fare: (back ? x.from_jecheon : x.to_jecheon)[0]?.fare || 0 }));
+  T.bus.filter(x => x.lat).forEach(x => out.push({ hub: x, type: 6, jc: T.hubs.terminal, jcName: "제천버스터미널", name: x.terminal,
+    dur: shortest(back ? x.from_jecheon : x.to_jecheon), fare: (back ? x.from_jecheon : x.to_jecheon)[0]?.fare || 0 }));
+  out.forEach(c => c.est = km(place, c.hub) * DETOUR / 25 * 60 + c.dur);   // 시내 구간은 시속 25km 어림
+  return out.sort((a, b) => a.est - b.est).slice(0, 3).map(c => {
+    const [s, e] = back ? [c.jc, c.hub] : [c.hub, c.jc];
+    return { trafficType: c.type, startName: back ? c.jcName : c.name, endName: back ? c.name : c.jcName,
+      startX: s.lng, startY: s.lat, endX: e.lng, endY: e.lat, sectionTime: c.dur, payment: c.fare };
   });
-  return out.sort((a, b) => toMin(a.dep) - toMin(b.dep));
 }
 
 async function planIntercity(origin, leg, dest, nowMin, back) {
@@ -1187,8 +1262,11 @@ async function planIntercity(origin, leg, dest, nowMin, back) {
     serviceTimes(leg).catch(() => []),
     back ? cityPath(en, dest) : cityPath(en, dest, leg.endName)]);
   const ready = nowMin + first.info.totalTime + 10;  // 역·터미널에서 10분 여유
+  // 탈 수 있는 편 중 가장 일찍 도착하는 것(바로 다음 편보다 조금 뒤 KTX가 먼저 닿을 수 있다)
+  const arrOf = x => toMin(x.arr) + (toMin(x.arr) < toMin(x.dep) ? 1440 : 0);
   let i = times.findIndex(x => toMin(x.dep) >= ready), tomorrow = false;
   if (i < 0 && times.length) { i = 0; tomorrow = true; }
+  if (i >= 0) for (let k = i + 1; k < Math.min(i + 4, times.length); k++) if (arrOf(times[k]) < arrOf(times[i])) i = k;
   const run = times[i];
   const dep = run ? toMin(run.dep) : ready;
   const arrHub = run ? toMin(run.arr) + (toMin(run.arr) < dep ? 1440 : 0) : dep + leg.sectionTime;
@@ -1198,12 +1276,40 @@ async function planIntercity(origin, leg, dest, nowMin, back) {
   const later = run ? times.slice(i + 1, i + 3).map(x => x.dep) : [];
   return {
     total: arrive - leave, arrive, leave, fare, tomorrow,
-    html: `<div class="opt"><div class="head"><b>${tomorrow ? "내일 " : ""}${fmt(leave)} 출발 → ${fmt(arrive)} 도착</b><span>약 ${durText(fmt(arrive - leave))} · ${won(fare)}</span></div>
+    html: `<div class="opt"><div class="head"><b>${dayText(planDay + tomorrow)}${fmt(leave)} 출발 → ${fmt(arrive)} 도착</b><span>약 ${durText(fmt(arrive - leave))} · ${won(fare)}</span></div>
       <ol class="legs">${legLines(first, leave)}
       <li><i>${ICON[leg.trafficType]}</i><span><span class="no" style="--lc:#173f7a">${esc(run?.name || KIND[leg.trafficType])}</span> ${esc(leg.startName)} → ${esc(leg.endName)}<small>${run ? `${run.dep} 출발 · ${run.arr} 도착${later.length ? " · 다음 " + later.join(", ") : ""}` : "시각표 정보 없음 · 예매 앱에서 확인"}</small>${bookLinks(leg.trafficType)}</span><time>${run ? run.dep : leg.sectionTime + "분"}</time></li>
       ${legLines(last, arrHub)}
       <li><i>${back ? "🏠" : "🏫"}</i><span>${back ? "집 도착" : "세명대 도착"}</span><time>${fmt(arrive)}</time></li></ol></div>`
   };
+}
+
+// 길찾기 출발 기준: 지금 / 미리 정한 시각(등교 내일 07:00, 하교 오늘 18:00) / 직접 고른 시각
+let planDay = 0;
+const dayText = n => ["", "내일 ", "모레 "][Math.min(n, 2)];
+function planWhen() {
+  const b = document.querySelector("#planWhen [aria-pressed=true]"), now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const kind = b ? b.dataset.w : "now";
+  if (kind === "now") return { now: true, min: nowMin, day: 0 };
+  const min = kind === "preset" ? presetMin() : toMin($("#planTime").value || "08:00");
+  const day = min < nowMin ? 1 : 0;   // 이미 지난 시각이면 내일로
+  return { now: false, min, day };
+}
+// 미리 정한 시각: 등교 아침 7시, 하교 오후 6시 — 지났으면 '내일'로 표시
+const presetMin = () => tdir === "go" ? 7 * 60 : 18 * 60;
+function presetLabel() {
+  const now = new Date(), past = presetMin() <= now.getHours() * 60 + now.getMinutes();
+  $("#planPreset").textContent = (past ? "내일 " : "오늘 ") + (tdir === "go" ? "아침 7시" : "오후 6시");
+}
+function bindWhen() {
+  presetLabel();
+  $("#planWhen").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    document.querySelectorAll("#planWhen button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    $("#planTime").hidden = b.dataset.w !== "pick";
+    $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
+  });
+  $("#planTime").addEventListener("change", () => { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; });
 }
 
 // back=false: 출발지(내 위치) → 세명대 / back=true: 세명대 → 집
@@ -1212,42 +1318,112 @@ async function plan(place, back) {
   const origin = back ? campus : place, dest = back ? place : campus;
   const oName = back ? CAMPUS_NAME : "출발지", dName = back ? (place.label || "집") : CAMPUS_NAME;
   out.innerHTML = `<p class="note"><span class="spin"></span>경로를 찾는 중이에요…</p>`;
-  const now = new Date(), nowMin = now.getHours() * 60 + now.getMinutes();
+  const w = planWhen(), nowMin = w.min, day = w.day;   // day: 0 오늘, 1 내일
+  planDay = day;
   try {
-    const r = await odsay("searchPubTransPathT", { SX: origin.lng, SY: origin.lat, EX: dest.lng, EY: dest.lat });
-    let cards;
-    if (r.searchType === 0) {
-      cards = r.path.slice(0, 3).map(p => {
-        const arrive = nowMin + p.info.totalTime;
-        return `<div class="opt"><div class="head"><b>지금 출발 → ${fmt(arrive)} 무렵 도착</b><span>${p.info.totalTime}분 · ${won(p.info.payment)} · 걷기 ${distText(p.info.totalWalk / 1000)}</span></div><ol class="legs">${legLines(p, nowMin)}</ol></div>`;
-      });
-      const late = nowMin >= 22 * 60 || nowMin < 6 * 60;
-      $("#planNote").textContent = (late ? "⚠️ 지금은 늦은 시간이라 시내버스 막차가 끊겼을 수 있어요. " : "") + "버스를 기다리는 시간은 빠져 있어요. 실시간 도착은 카카오맵에서 확인하세요.";
-    } else {
-      const seen = new Set(), legs = [];
-      for (const p of r.path) {
-        const s = p.subPath.find(x => x.trafficType >= 4 && x.trafficType <= 6);
-        if (!s) continue;
-        const k = s.trafficType + s.startName + s.endName;
-        if (seen.has(k)) continue;
-        seen.add(k); legs.push(s);
-        if (legs.length === 3) break;
-      }
-      const opts = (await Promise.all(legs.map(l => planIntercity(origin, l, dest, nowMin, back).catch(() => null)))).filter(Boolean);
-      opts.sort((a, b) => (a.tomorrow - b.tomorrow) || (a.arrive - b.arrive));
-      cards = opts.slice(0, 3).map(o => o.html);
-      $("#planNote").textContent = "기차·시외버스는 시각표 기준, 시내 구간은 버스 기다리는 시간이 빠진 어림값이에요. 역·터미널에서 10분 여유를 두었어요.";
+    const r = await kroute(origin, dest);
+    const opts = [];
+    if (r.status === "OK" && r.routes?.length) r.routes.slice(0, 3).map(kToPath).forEach(p => {
+      const arrive = nowMin + p.info.totalTime, walk = p.info.totalWalk;
+      opts.push({ arrive, tomorrow: false, html: `<div class="opt"><div class="head"><b>${w.now ? "지금" : dayText(day) + fmt(nowMin)} 출발 → ${fmt(arrive)} 무렵 도착</b><span>${p.info.totalTime}분 · ${won(p.info.payment)}${walk ? " · 걷기 " + distText(walk / 1000) : ""}</span></div><ol class="legs">${legLines(p, nowMin)}</ol></div>` });
+    });
+    // 시내버스로 1시간이 넘거나 못 찾으면 기차·시외버스(시간표)로 가는 길도 함께 비교한다
+    const viaHub = !opts.length || Math.min(...opts.map(o => o.arrive - nowMin)) > 60;
+    if (viaHub) {
+      const legs = intercityLegs(back ? dest : origin, back);
+      opts.push(...(await Promise.all(legs.map(l => planIntercity(origin, l, dest, nowMin, back).catch(() => null)))).filter(Boolean));
     }
+    opts.sort((a, b) => (a.tomorrow - b.tomorrow) || (a.arrive - b.arrive));
+    const cards = opts.slice(0, 3).map(o => o.html);
+    const late = nowMin >= 22 * 60 || nowMin < 6 * 60;   // 고른 시각 기준
+    $("#planNote").textContent = (late ? "⚠️ 지금은 늦은 시간이라 시내버스 막차가 끊겼을 수 있어요. " : "") +
+      (viaHub ? "기차·시외버스는 시각표 기준, 시내 구간은 버스 기다리는 시간이 빠진 어림값이에요. 역·터미널에서 10분 여유를 두었어요."
+              : "버스를 기다리는 시간은 빠져 있어요. 실시간 도착은 카카오맵에서 확인하세요.");
     const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
     out.innerHTML = (cards.length ? cards.join("") : `<p class="note">찾은 경로가 없어요.</p>`) +
-      `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵에서 실시간으로 보기</a></div><p class="note">경로 자료: ODsay 대중교통 API</p>`;
+      `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵에서 실시간으로 보기</a></div><p class="note">경로 자료: 카카오맵 대중교통 API · 기차·시외버스는 시간표</p>`;
   } catch (e) {
     const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
     out.innerHTML = (e.code === "429"
-      ? `<p class="msg err">오늘 길찾기 사용 한도가 다 찼어요. 내일 다시 쓸 수 있어요.</p>`
+      ? `<p class="msg err">오늘 길찾기 사용 한도가 다 찼어요. 내일 다시 쓸 수 있어요. 그동안은 아래 카카오맵 길찾기를 써 주세요.</p>`
       : `<p class="msg err">경로를 찾지 못했어요 (${esc(e.message)}). 잠시 뒤 다시 눌러 주세요.</p>`) +
       `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵 대중교통 길찾기로 보기</a></div>`;
   }
+}
+
+// ---- 제천 시내버스 실시간 도착 (TAGO 버스도착정보, geoai-na Netlify 함수 busarr 가 키를 숨겨 중계) ----
+const BUSARR = location.hostname === "localhost" ? "http://localhost:8899/busarr" : "https://geoai-na.netlify.app/.netlify/functions/busarr";
+const SCHOOL_BUS = ["31", "35", "53", "523", "531"];   // 제천역·터미널 ↔ 세명대 노선(TAGO 버스노선정보로 확인, 523·531은 세명대입구사거리까지)
+// 정류장은 방향이 맞는 쪽만(TAGO 노선별 경유 정류장 순서로 확인 — 길 건너편 정류장은 반대 방향)
+const LIVE_STOPS = {
+  go: [{ label: "제천역", nodes: ["JCB273051295"], note: "제천역 정류장에서 학교 가는 버스",
+         tip: "제천역은 31·35·523·531번의 출발 정류장이라, 아직 출발하지 않은 버스는 도착 정보에 보이지 않을 수 있어요." },
+       { label: "시외버스터미널", nodes: ["JCB273017012"], note: "시외버스터미널앞 정류장에서 학교 가는 버스" }],
+  back: [{ label: "학술관", nodes: ["JCB273051339"], note: "세명대 학술관 정류장에서 제천역·터미널 가는 버스" },
+         { label: "동문 한방병원", nodes: ["JCB273016030"], note: "세명대 동문 한방병원 정류장에서 제천역·터미널 가는 버스" },
+         { label: "입구사거리", nodes: ["JCB273016028"], note: "세명대입구사거리 정류장에서 제천역·터미널 가는 버스(523·531번 포함)" }],
+};
+let liveSel = { go: 0, back: 0 }, liveTimer = null, liveShowAll = false;
+function renderLiveStops() {
+  const d = tdir, stops = LIVE_STOPS[d];
+  $("#liveStops").innerHTML = stops.map((x, i) => `<button type="button" data-i="${i}" aria-pressed="${i === liveSel[d]}">${esc(x.label)}</button>`).join("");
+  $("#liveStops").hidden = stops.length < 2;
+  const st = stops[liveSel[d]];
+  $("#liveIntro").textContent = st.note + "가 몇 분 뒤 오는지 보여 줘요. " + (d === "go" ? "학교 가는" : "제천역·터미널 가는") + " 번호(" + SCHOOL_BUS.join("·") + "번)를 먼저 보여 줘요." + (st.tip ? " " + st.tip : "");
+}
+async function loadLive() {
+  clearTimeout(liveTimer);
+  if (view !== "transit" || document.hidden) return;
+  const stop = LIVE_STOPS[tdir][liveSel[tdir]], list = $("#liveList");
+  $("#liveAt").textContent = "불러오는 중…";
+  try {
+    const j = await fetch(BUSARR + "?nodes=" + stop.nodes.join(",")).then(r => r.json());
+    if (!j.ok) throw new Error();
+    // 도착 시간이 0으로 오는데 정류장이 많이 남은 경우(정보 갱신 전)는 정류장 수로 어림한다(1정류장 ≈ 1.5분)
+    j.buses.forEach(b => { b.est = b.min <= 1 && b.prev > 3; if (b.est) b.min = Math.round(b.prev * 1.5); });
+    j.buses.sort((a, b) => a.min - b.min);
+    const school = j.buses.filter(b => SCHOOL_BUS.includes(b.no)), other = j.buses.filter(b => !SCHOOL_BUS.includes(b.no));
+    const row = (b, cls) => `<li class="${cls}${b.min <= 3 ? " soon" : ""}"><span class="no" style="--lc:${cls ? "#64748b" : "#3d6fd1"}">${esc(b.no)}</span>
+      <span class="where"><b>${b.prev ? b.prev + "정류장 전" : "곧 도착"}</b>${esc(b.stop)}${b.low ? " · 저상버스" : ""}</span><time>${b.min <= 1 ? "곧 도착" : (b.est ? "약 " : "") + b.min + "분"}</time></li>`;
+    list.innerHTML = (school.length ? school.map(b => row(b, "")).join("") : `<li class="other">지금 이 정류장으로 오고 있는 ${tdir === "go" ? "학교행" : "제천역·터미널행"} 버스(${SCHOOL_BUS.join("·")}번)가 없어요. 시간표는 아래 ‘시내버스·택시’ 탭에서 볼 수 있어요.</li>`) +
+      (other.length ? (liveShowAll ? other.map(b => row(b, "other")).join("") : `<li class="more" id="liveMore">다른 노선 ${other.length}대 더 보기</li>`) : "");
+    const t = new Date(j.at);
+    $("#liveAt").textContent = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} 기준 · 30초마다 새로 고침`;
+  } catch {
+    list.innerHTML = `<li class="other">실시간 정보를 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.</li>`;
+    $("#liveAt").textContent = "";
+  }
+  liveTimer = setTimeout(loadLive, 30000);
+}
+function bindLive() {
+  $("#liveStops").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; liveSel[tdir] = +b.dataset.i; liveShowAll = false; renderLiveStops(); loadLive(); });
+  $("#liveList").addEventListener("click", e => { if (e.target.closest("#liveMore")) { liveShowAll = true; loadLive(); } });
+  $("#liveRefresh").addEventListener("click", loadLive);
+  $("#planOut").addEventListener("click", e => {
+    const b = e.target.closest(".golive"); if (!b) return;
+    const [d, i] = b.dataset.live.split(",");
+    if (d === tdir) liveSel[d] = +i;
+    liveShowAll = false; renderLiveStops(); loadLive();
+    const h = $("#h-live"); window.scrollTo({ top: h.getBoundingClientRect().top + scrollY - $("#appbar").offsetHeight - 12, behavior: "smooth" });
+  });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadLive(); });
+}
+function showLive() { liveShowAll = false; renderLiveStops(); loadLive(); }
+
+// ---- 헤더 재난 소식 띠 (기상특보·재난뉴스, geoai-na Netlify 함수 alerts) ----
+const ALERTS = location.hostname === "localhost" ? "http://localhost:8899/alerts" : "https://geoai-na.netlify.app/.netlify/functions/alerts";
+async function loadTicker() {
+  try {
+    const j = await fetch(ALERTS).then(r => r.json());
+    const items = (j.items || []).slice(0, 8);
+    if (!items.length) { $("#ticker").hidden = true; return; }
+    const label = { "특보": "기상특보", "예비특보": "예비특보", "문자": "재난문자", "뉴스": "재난뉴스" };
+    $("#tkIn").innerHTML = items.map(x => `<a href="${esc(x.url || "#")}" target="_blank" rel="noopener"><b class="k-${esc(x.kind)}">${label[x.kind] || esc(x.kind)}</b>${esc(x.text)}</a>`).join("");
+    $("#ticker").hidden = false;
+    // 글자 길이에 맞춰 흐르는 속도를 일정하게(초당 약 60px)
+    requestAnimationFrame(() => $("#tkIn").style.setProperty("--tkdur", Math.max(20, ($("#tkIn").scrollWidth) / 60) + "s"));
+  } catch { $("#ticker").hidden = true; }
+  syncBars();
 }
 
 function renderToday() {
@@ -1280,7 +1456,8 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe
 
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
-  renderToday(); renderLists(); bindTransit();
+  renderToday(); renderLists(); bindTransit(); bindLive(); bindWhen();
+  loadTicker(); setInterval(loadTicker, 5 * 60 * 1000);
   $("#tongAbout").innerHTML = tongLinks();
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
   $("#results").addEventListener("click", e => { const b = e.target.closest(".go-route"); if (b) showRoute(b.dataset.id); });

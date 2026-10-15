@@ -40,6 +40,14 @@ def main():
     if transit.exists():
         data["transit"] = json.loads(transit.read_text())
         data["transit"].update(meta["transit"])
+        # 출발 역·터미널 좌표(카카오 장소 검색) — 대중교통 길찾기에서 집 ↔ 역·터미널 구간을 찾을 때 쓴다
+        hubs = ROOT / "data" / "origin_hubs.json"
+        if hubs.exists():
+            pos = json.loads(hubs.read_text())
+            for x in data["transit"]["train"]:
+                x.update({k: pos[x["from"]][k] for k in ("lat", "lng")} if x["from"] in pos else {})
+            for x in data["transit"]["bus"]:
+                x.update({k: pos[x["terminal"]][k] for k in ("lat", "lng")} if x["terminal"] in pos else {})
     (ROOT / "docs" / "shuttle.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     n = sum(len(r["stops"]) for r in routes)
     print(f"노선 {len(routes)}개, 정류장 {n}곳 → docs/shuttle.json")

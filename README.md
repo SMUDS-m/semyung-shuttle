@@ -17,7 +17,8 @@
 - [x] ⑤ 정적 데이터 — `scripts/build_web.py` → `docs/shuttle.json`
 - [x] ⑥ 웹 화면 — `docs/index.html` (GitHub Pages)
 - [x] 다른 교통편 — `scripts/fetch_transit.py` → `data/transit.json` (기차 청량리·서울 ↔ 제천역, 시외버스 7개 터미널 ↔ 제천버스터미널)
-- [x] 대중교통 길찾기 — [ODsay](https://lab.odsay.com) API로 출발지 → 세명대 경로(시내 구간 + 기차·시외버스 실제 시각표 + 제천역·터미널 → 학교)
+- [x] 대중교통 길찾기 — 시내 구간은 카카오맵 대중교통 API, 기차·시외버스는 저장한 시각표, 제천역·터미널 ↔ 학교는 미리 받아 둔 경로로 잇는다
+- [x] 제천 시내버스 실시간 도착 — 국토교통부 TAGO 버스도착정보(제천역·시외버스터미널·세명대 학술관 정류장)
 - [ ] ⑦ 변경 감시
 
 ## 파이프라인
@@ -102,7 +103,9 @@ python3 scripts/build_web.py
 
 - [2026학년도 2학기 통학버스 운행사항 안내](https://www.semyung.ac.kr/prog/vwBoard/bbs01/kor/sub08_02_01/view.do?board_num=190293&mno=sub08_02_01) (학생지원팀, 2026.08.21. — 붙임 1 운행사항, 붙임 3 노선 명칭·위치 변경)
 
-- 대중교통 길찾기: [ODsay LAB](https://lab.odsay.com) 웹 키(등록 도메인 smuds-m.github.io·localhost에서만 동작)
+- 대중교통 길찾기: 카카오맵 대중교통 경로 API(하루 1,000건 무료) — 키는 geoai-na Netlify 함수 `kroute`가 숨겨서 대신 부른다
+- 실시간 도착: 공공데이터포털 국토교통부 TAGO 버스도착정보 — Netlify 함수 `busarr`
+- `data/lastmile.json`·`firstmile.json`(제천역·터미널 ↔ 학교 경로)은 예전에 ODsay로 한 번 받아 둔 정적 자료다(`scripts/fetch_lastmile.py`, 앱은 ODsay를 부르지 않음)
 
 - 기차·시외버스 시간표: [아사마루 열차](https://train.asamaru.net) · [아사마루 시외버스](https://transportation.asamaru.net) (코레일·시외버스 공공데이터 기반, 수원·대전은 자료가 없어 뺌)
 - 시내버스 경유 노선: [코리아차트 제천 시내버스](https://info.koreacharts.com/citybus/33030/contents.html). 시간표는 공개 자료가 없어 카카오맵 대중교통 길찾기로 연결
