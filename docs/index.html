@@ -396,6 +396,14 @@ document.addEventListener('click',function(e){
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
     <p class="back-only pickalt">주소가 안 나오면 <button type="button" class="linkbtn js-pick" aria-pressed="false">지도에서 집 고르기</button></p>
+    <div class="when"><span>언제</span>
+      <div class="seg small" id="shWhen">
+        <button type="button" data-w="now" aria-pressed="true">지금</button>
+        <button type="button" data-w="next" aria-pressed="false" id="shNext">다음 운행일</button>
+        <button type="button" data-w="pick" aria-pressed="false">날짜 지정</button>
+      </div>
+      <input type="date" id="shDate" hidden aria-label="날짜">
+    </div>
     <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-pick"></div>
     <div class="results" id="results" aria-live="polite"></div>
@@ -561,7 +569,7 @@ function nearest(pt) {
   return out;
 }
 
-function describe({ r, s, i, k }, now) {
+function describe({ r, s, i, k }, now, live = true) {
   const walkKm = k * DETOUR, walkMin = Math.ceil(walkKm * 1000 / WALK_M_PER_MIN);
   const canWalk = walkKm <= WALK_LIMIT_KM;
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -573,7 +581,8 @@ function describe({ r, s, i, k }, now) {
     if (t >= 0) {
       bus = { trip: t, dep: toMin(s.times[t]) };
       const spare = bus.dep - ready;
-      if (!canWalk) { state = `오늘 ${t + 1}호차 ${s.times[t]} 출발`; cls = "warn"; }
+      if (!live) { state = canWalk ? `${fmt(bus.dep - walkMin)}까지 나가면 돼요` : `${t + 1}호차 ${s.times[t]} 출발`; cls = "go"; }
+      else if (!canWalk) { state = `오늘 ${t + 1}호차 ${s.times[t]} 출발`; cls = "warn"; }
       else if (spare <= 5) { state = `지금 바로 나가야 해요 · 여유 ${spare}분`; cls = "warn"; }
       else if (spare > 90) { state = `${fmt(bus.dep - walkMin)}까지 나가면 돼요`; cls = "go"; }
       else { state = `지금 출발하면 ${spare}분 여유`; cls = "go"; }
@@ -586,7 +595,7 @@ function describe({ r, s, i, k }, now) {
     const when = !nd ? "" : (nd - now < 6.5 * 864e5 ? `${DAYS[nd.getDay()]}요일 첫차` : `${mdText(dateKey(nd))}(${DAYS[nd.getDay()]}) 첫차`);
     state = !nd ? "이번 학기 통학버스 운행이 끝났어요 (방학 중 미운행)"
       : service ? `오늘 등교 버스는 끝났어요 · ${when}`
-      : inTerm(now) ? `오늘은 운행하지 않아요 · ${when}` : `방학 중이라 운행하지 않아요 · ${when}`;
+      : inTerm(now) ? `${live ? "오늘은" : "그날은"} 운행하지 않아요 · ${when}` : `방학 중이라 운행하지 않아요 · ${when}`;
     cls = "miss";
   }
   const arr = arriveAt(r, bus.trip);
@@ -749,7 +758,7 @@ function nearestBack(pt) {
   }
   return out;
 }
-function describeBack(x, now) {
+function describeBack(x, now, live = true) {
   const walkKm = x.k * DETOUR, walkMin = Math.ceil(walkKm * 1000 / WALK_M_PER_MIN);
   const canWalk = walkKm <= WALK_LIMIT_KM;
   const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -767,9 +776,9 @@ function describeBack(x, now) {
   const when = later ? (later - now < 6.5 * 864e5 ? `${DAYS[later.getDay()]}요일` : `${mdText(dateKey(later))}(${DAYS[later.getDay()]})`) : "";
   const rest = list.slice(i + 1);
   const state = later
-    ? `${isServiceDay(now) ? "오늘 하교 버스는 끝났어요" : "오늘은 운행하지 않아요"} · ${when} ${t}부터`
-    : `다음 하교 버스 ${t}${last ? " (막차)" : ""}${rest.length ? ` · 이후 ${rest.join(", ")}` : ""}`;
-  return { t, dep, last, reserve, arr, home, later, state, cls: later ? "miss" : (dep - nowMin <= 10 ? "warn" : "go"),
+    ? `${isServiceDay(now) ? "오늘 하교 버스는 끝났어요" : live ? "오늘은 운행하지 않아요" : inTerm(now) ? "그날은 운행하지 않아요" : "방학 중이라 운행하지 않아요"} · ${when} ${t}부터`
+    : `${live ? "다음 " : ""}하교 버스 ${t}${last ? " (막차)" : ""}${rest.length ? ` · 이후 ${rest.join(", ")}` : ""}`;
+  return { t, dep, last, reserve, arr, home, later, state, cls: later ? "miss" : (live && dep - nowMin <= 10 ? "warn" : "go"),
            walkKm, walkMin, canWalk, note: x.b.note || x.r.back.note };
 }
 // 카카오맵 하교 경로: 학교 → (먼저 서는 하차 장소들) → 이 하차 장소
@@ -784,9 +793,9 @@ function busBackLink(r, idx) {
 
 function renderBackResults() {
   if (!home) { $("#results").innerHTML = ""; setMsg("집 주소를 넣으면 가까운 하차 정류장과 다음 하교 버스를 알려 드려요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.", false, "shuttle"); return; }
-  const now = new Date(), list = nearestBack(home);
-  $("#results").innerHTML = `<div class="from">집: <b>${esc(home.label || "고른 위치")}</b></div>` + list.map((x, n) => {
-    const d = describeBack(x, now);
+  const w = shWhen(), now = w.at, list = nearestBack(home);
+  $("#results").innerHTML = `<div class="from">집: <b>${esc(home.label || "고른 위치")}</b>${w.live ? "" : ` · ${w.label} 기준`}</div>` + list.map((x, n) => {
+    const d = describeBack(x, now, w.live);
     const name = encodeURIComponent(x.b.place || x.b.name), at = `${name},${x.b.lat},${x.b.lng}`;
     const walkHome = `https://map.kakao.com/link/by/walk/${at}/${encodeURIComponent((home.label || "집").replace(/,/g, " "))},${home.lat},${home.lng}`;
     const walk = d.canWalk ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>` : `<b>${distText(d.walkKm)}</b><span>걷기엔 멀어요 · 버스·차 이용</span>`;
@@ -843,13 +852,38 @@ function kakaoLinks(r, s, i) {
   return `<a href="${walk}" target="_blank" rel="noopener">정류장까지 길찾기</a><a href="${busRouteLink(r, i)}" target="_blank" rel="noopener">🚌 버스 경로(카카오맵)</a><a href="https://map.kakao.com/link/map/${to}" target="_blank" rel="noopener">정류장 위치</a>`;
 }
 
+// 셔틀 '언제': 지금 / 다음 운행일 / 고른 날짜 — 날짜를 고르면 그날 첫차부터 보여 준다
+function dayStart(d) { const n = new Date(d); n.setHours(0, 0, 0, 0); return n; }
+const dayLabel = d => `${mdText(dateKey(d))}(${DAYS[d.getDay()]})`;
+function shWhen() {
+  const b = document.querySelector("#shWhen [aria-pressed=true]"), kind = b ? b.dataset.w : "now", now = new Date();
+  if (kind === "next") { const nd = nextServiceDay(now); if (nd) { const at = dayStart(nd); return { live: false, at, label: dayLabel(at) }; } }
+  if (kind === "pick" && $("#shDate").value) { const at = new Date($("#shDate").value + "T00:00"); return { live: false, at, label: dayLabel(at) }; }
+  return { live: true, at: now };
+}
+function shNextLabel() {
+  const now = new Date(), nd = nextServiceDay(now);
+  $("#shNext").textContent = !nd ? "다음 운행일" : dateKey(nd) === dateKey(new Date(now.getTime() + 864e5)) ? "내일" : `${DAYS[nd.getDay()]}요일`;
+}
+function bindShWhen() {
+  shNextLabel();
+  $("#shDate").value = dateKey(new Date(Date.now() + 864e5));
+  $("#shWhen").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    document.querySelectorAll("#shWhen button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    $("#shDate").hidden = b.dataset.w !== "pick";
+    if (sdir === "back" || goFrom()) renderResults();
+  });
+  $("#shDate").addEventListener("change", () => { if (sdir === "back" || goFrom()) renderResults(); });
+}
+
 function renderResults() {
   if (sdir === "back") return renderBackResults();
   const from = goFrom();   // 집 주소와 내 위치 중 마지막으로 정한 곳(대중교통 등교와 같은 기준)
   if (!from) return;
-  const now = new Date(), list = nearest(from);
-  $("#results").innerHTML = `<div class="from">${from === home ? "출발(집)" : "출발"}: <b>${esc(from.label || "고른 위치")}</b></div>` + list.map((x, n) => {
-    const d = describe(x, now);
+  const w = shWhen(), now = w.at, list = nearest(from);
+  $("#results").innerHTML = `<div class="from">${from === home ? "출발(집)" : "출발"}: <b>${esc(from.label || "고른 위치")}</b>${w.live ? "" : ` · ${w.label} 기준`}</div>` + list.map((x, n) => {
+    const d = describe(x, now, w.live);
     const walk = d.canWalk
       ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>`
       : `<b>${distText(d.walkKm)}</b><span>걷기엔 멀어요 · 버스·차 이용</span>`;
@@ -871,7 +905,7 @@ function renderResults() {
   const far = list[0].k > 30;
   setMsg(far
     ? `가장 가까운 정류장도 ${distText(list[0].k)} 떨어져 있어요. 통학버스는 수도권·원주·충주에서만 출발해요. '대중교통' 탭도 확인해 보세요.`
-    : "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요.", false, "shuttle");
+    : w.live ? "버스 출발 시각까지 남은 시간은 걸어가는 시간을 빼고 계산했어요." : "나갈 시각은 정류장까지 걸어가는 시간을 빼고 계산했어요.", false, "shuttle");
   if (tdir === "go") setMsg("출발지를 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit");
 }
 
@@ -1458,7 +1492,7 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe
 
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
-  renderToday(); renderLists(); bindTransit(); bindLive(); bindWhen();
+  renderToday(); renderLists(); bindTransit(); bindLive(); bindWhen(); bindShWhen();
   loadTicker(); setInterval(loadTicker, 5 * 60 * 1000);
   $("#tongAbout").innerHTML = tongLinks();
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
