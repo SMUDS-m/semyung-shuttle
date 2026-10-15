@@ -382,18 +382,19 @@ document.addEventListener('click',function(e){
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-go" data-dir="go">
   <section class="card" aria-labelledby="h-find">
-    <h2 id="h-find">가까운 정류장 찾기</h2>
-    <p class="note" id="findNote">집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요.</p>
-    <div class="find go-only">
-      <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
-      <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
-    </div>
-    <form class="addr back-only" id="addrForm" autocomplete="off">
+    <h2 id="h-find">탈 정류장 찾기</h2>
+    <p class="note" id="findNote">집 주소나 아파트·건물 이름을 넣으면 가까운 승차 정류장과 다음 등교 버스를 알려 줘요.</p>
+    <form class="addr" id="addrForm" autocomplete="off">
       <label class="sr" for="homeAddr">집 주소</label>
       <input id="homeAddr" type="search" enterkeyhint="search" placeholder="예: 하남시 덕풍동 ○○아파트">
       <button class="btn" type="submit">🔍 찾기</button>
     </form>
-    <ul class="addrlist back-only" id="addrList" aria-live="polite"></ul>
+    <ul class="addrlist" id="addrList" aria-live="polite"></ul>
+    <p class="go-only orline">또는 지금 있는 곳에서 찾기</p>
+    <div class="find go-only">
+      <button class="btn js-locate" type="button">📍 내 위치로 찾기</button>
+      <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
+    </div>
     <p class="back-only pickalt">주소가 안 나오면 <button type="button" class="linkbtn js-pick" aria-pressed="false">지도에서 집 고르기</button></p>
     <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-pick"></div>
@@ -688,7 +689,7 @@ function setHome(lat, lng, label) {
   try { localStorage.setItem("shuttle-addr", JSON.stringify(home)); } catch {}
   $("#addrList").innerHTML = ""; $("#addrListT").innerHTML = "";
   ["#homeAddr", "#homeAddrT"].forEach(s => { if (label) $(s).value = label; });
-  if (view === "transit" && tdir === "go") tsrc = "home";
+  if ((view === "transit" && tdir === "go") || (view === "shuttle" && sdir === "go")) tsrc = "home";
   if (view === "transit") { $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
     setMsg(tdir === "back" ? "집을 정했어요. 아래 버튼으로 집까지 경로를 찾아보세요." : "집을 출발지로 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit"); }
   updatePlanFrom();
@@ -813,13 +814,13 @@ function renderBackResults() {
 
 function setDir(v) {
   sdir = v;
-  $("#h-find").textContent = v === "go" ? "가까운 정류장 찾기" : "내릴 정류장 찾기";
+  $("#h-find").textContent = v === "go" ? "탈 정류장 찾기" : "내릴 정류장 찾기";
   $("#view-shuttle").dataset.dir = v;
   if (picking && map) togglePick();
   $("#findNote").textContent = v === "go"
-    ? "집이나 지금 있는 곳에서 가까운 승차 정류장을 찾아요."
+    ? "집 주소나 아파트·건물 이름을 넣으면 가까운 승차 정류장과 다음 등교 버스를 알려 줘요."
     : "집 주소나 아파트·건물 이름을 넣으면 가까운 하차 정류장과 다음 하교 버스를 알려 줘요.";
-  if (v === "back" || me) renderResults(); else { $("#results").innerHTML = ""; setMsg("위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "shuttle"); }
+  if (v === "back" || goFrom()) renderResults(); else { $("#results").innerHTML = ""; setMsg("위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "shuttle"); }
   renderLists();
 }
 
@@ -844,9 +845,10 @@ function kakaoLinks(r, s, i) {
 
 function renderResults() {
   if (sdir === "back") return renderBackResults();
-  if (!me) return;
-  const now = new Date(), list = nearest(me);
-  $("#results").innerHTML = list.map((x, n) => {
+  const from = goFrom();   // 집 주소와 내 위치 중 마지막으로 정한 곳(대중교통 등교와 같은 기준)
+  if (!from) return;
+  const now = new Date(), list = nearest(from);
+  $("#results").innerHTML = `<div class="from">${from === home ? "출발(집)" : "출발"}: <b>${esc(from.label || "고른 위치")}</b></div>` + list.map((x, n) => {
     const d = describe(x, now);
     const walk = d.canWalk
       ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>`
