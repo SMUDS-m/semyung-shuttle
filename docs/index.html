@@ -30,7 +30,7 @@ html,body{margin:0;background:var(--bg);color:var(--ink);
 /* 앱처럼: 위·아래 바는 고정, 가운데만 스크롤 */
 html{scroll-padding-top:calc(var(--top,140px) + 10px);scroll-padding-bottom:calc(var(--bottom,64px) + 10px)}
 body{font-size:16px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
-main{max-width:720px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px calc(var(--bottom,64px) + 24px);display:grid;gap:16px}
+main{max-width:752px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px calc(var(--bottom,64px) + 24px);display:grid;gap:16px}
 .appbar,.appfoot{position:fixed;left:0;right:0;z-index:50;background:var(--card)}
 .appbar{top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;border-bottom:1px solid var(--line);box-shadow:0 4px 14px -10px rgba(0,0,0,.35)}
 .appfoot{bottom:0;padding:8px 16px calc(env(safe-area-inset-bottom,0px) + 8px);border-top:1px solid var(--line);box-shadow:0 -4px 14px -10px rgba(0,0,0,.35)}
@@ -66,6 +66,16 @@ main{max-width:720px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px ca
 .today.off{color:var(--miss)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .card h2{margin:0 0 10px;font-size:17px;letter-spacing:-.3px}
+/* 펼치기 카드: 제목만 보이고 누르면 내용이 펼쳐진다 */
+.fold>h2{cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0}
+.fold>h2::after{content:"펼치기 ▾";flex:none;font-size:13px;font-weight:700;color:var(--brand)}
+.fold.open>h2{margin-bottom:10px}
+.fold.open>h2::after{content:"접기 ▴"}
+.fold:not(.open)>:not(h2){display:none!important}
+details.more{margin-top:10px}
+details.more>summary{cursor:pointer;list-style:none;padding:11px;border:1px dashed var(--line);border-radius:12px;text-align:center;font-weight:800;font-size:14px;color:var(--brand)}
+details.more>summary::-webkit-details-marker{display:none}
+details.more[open]>summary{margin-bottom:10px}
 button{font:inherit;cursor:pointer;border:0}
 .find{display:grid;grid-template-columns:1fr auto;gap:8px}
 .btn{padding:14px 16px;border-radius:12px;font-weight:800;font-size:16px;background:var(--brand);color:var(--brand-ink)}
@@ -104,6 +114,18 @@ button{font:inherit;cursor:pointer;border:0}
 .live time{font-weight:800;font-size:17px;color:var(--brand);white-space:nowrap}
 .live li.soon time{color:#c2410c}
 .live .more{justify-content:center;font-size:14px;color:var(--sub);cursor:pointer;background:var(--soft)}
+.livepick{margin:10px 0 0}
+.livepick>span{display:block;font-size:14px;font-weight:800;color:var(--sub);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;font-size:13.5px}
+.chips button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.chips button.find{color:var(--brand);border-style:dashed}
+.chips .x{margin-left:4px;opacity:.8}
+#liveMapBox{margin-top:8px}
+#liveMap{height:min(50vh,340px);border-radius:14px;border:1px solid var(--line);overflow:hidden;background:var(--soft)}
+.livedot{width:14px;height:14px;padding:0;border-radius:50%;background:#2f6fed;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);cursor:pointer}
+.livedot.on{background:#c2410c;width:18px;height:18px}
+.pop .pick{display:block;margin-top:6px;padding:6px 10px;border-radius:8px;background:#005DAB;color:#fff;font-weight:800;font-size:13px}
 .liveat{margin:8px 0 0;font-size:13px;color:var(--sub);text-align:right}
 .aboutlist{margin:4px 0 12px;padding-left:18px;font-size:14px;line-height:1.6;color:var(--sub)}
 .aboutlist li{margin:2px 0}
@@ -198,6 +220,11 @@ th{font-size:12px;color:var(--sub)}
 .view{display:grid;gap:14px}
 #mapbox{display:grid;gap:10px}
 #view-transit .legend{display:none}
+/* 출발지가 정해지면 입력칸은 접고 한 줄 요약 + [바꾸기] */
+.fromline{display:flex;align-items:center;gap:8px;font-size:15px;padding:10px 12px;border-radius:12px;background:var(--soft);margin:0 0 10px}
+.fromline b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fromline .linkbtn{flex:none;font-weight:800}
+.card.set:not(.edit) .setup{display:none}
 .from{font-size:14px;padding:10px 12px;border-radius:10px;background:var(--soft);margin:10px 0 8px}
 #planBtn{width:100%}
 #planBtn:disabled{opacity:.45;cursor:not-allowed}
@@ -298,7 +325,7 @@ main>*,.view>*,.card,.res,.opt,.hub,details.rt{min-width:0}
 .today{background:rgba(255,255,255,.16);color:#fff;font-weight:700}
 .today.off{background:rgba(255,255,255,.16);color:#ffd5d5}
 /* 탭: 파란 바 아래 흰 띠 + 파란 밑줄 */
-.tabs{background:var(--strip);gap:0;margin:0 -16px;padding:0 8px;box-shadow:0 0 0 100vmax var(--strip);clip-path:inset(0 -100vmax)}
+.tabs{background:var(--strip);gap:0;margin:0 -16px;padding:0 16px;box-shadow:0 0 0 100vmax var(--strip);clip-path:inset(0 -100vmax)}
 .tabs button{background:transparent;border:0;border-radius:0;border-bottom:3px solid transparent;color:var(--sub);min-height:46px;font-weight:700}
 .tabs button[aria-selected="true"]{background:transparent;color:var(--brand);border-bottom-color:var(--brand);font-weight:800}
 /* 등교(아침 주황) · 하교(저녁 보라) 글자색 — 선택한 탭 밑줄도 같은 색 */
@@ -381,8 +408,16 @@ document.addEventListener('click',function(e){
 </a>
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-go" data-dir="go">
+  <section class="card fold" aria-labelledby="h-routes">
+    <h2 id="h-routes">노선별 시간표 및 경로보기</h2>
+    <p class="note">노선을 누르면 정류장 시간과 <b>카카오맵 경로 보기</b>가 나와요. <span id="termNote">학기 중</span> 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
+    <div id="routes"></div>
+  </section>
+
   <section class="card" aria-labelledby="h-find">
     <h2 id="h-find">탈 정류장 찾기</h2>
+    <div class="fromline" id="fromS" hidden></div>
+    <div class="setup">
     <p class="note" id="findNote">집 주소나 아파트·건물 이름을 넣으면 가까운 승차 정류장과 다음 등교 버스를 알려 줘요.</p>
     <form class="addr" id="addrForm" autocomplete="off">
       <label class="sr" for="homeAddr">집 주소</label>
@@ -396,6 +431,8 @@ document.addEventListener('click',function(e){
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
     <p class="back-only pickalt">주소가 안 나오면 <button type="button" class="linkbtn js-pick" aria-pressed="false">지도에서 집 고르기</button></p>
+    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
+    </div>
     <div class="when"><span>언제</span>
       <div class="seg small" id="shWhen">
         <button type="button" data-w="now" aria-pressed="true">지금</button>
@@ -404,15 +441,8 @@ document.addEventListener('click',function(e){
       </div>
       <input type="date" id="shDate" hidden aria-label="날짜">
     </div>
-    <p class="msg js-msg">위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.</p>
     <div class="mapslot pickslot" id="slot-pick"></div>
     <div class="results" id="results" aria-live="polite"></div>
-  </section>
-
-  <section class="card" aria-labelledby="h-routes">
-    <h2 id="h-routes">노선별 시간표 및 경로보기</h2>
-    <p class="note">노선을 누르면 정류장 시간과 <b>카카오맵 경로 보기</b>가 나와요. <span id="termNote">학기 중</span> 월~금 운행 (주말·공휴일·방학 미운행). 하교 버스는 <b>민송도서관 뒤편 문화관 앞 주차장</b>에서 탑니다.</p>
-    <div id="routes"></div>
   </section>
 
 </div>
@@ -420,6 +450,7 @@ document.addEventListener('click',function(e){
 <div class="view" id="view-transit" role="tabpanel" aria-labelledby="tab-transit" data-dir="go" hidden>
   <section class="card" aria-labelledby="h-plan">
     <h2 id="h-plan">세명대까지 대중교통 길찾기</h2>
+    <div class="setup">
     <p class="note" id="planIntro">집에서 세명대까지 버스·지하철·기차 경로와 시간을 찾아요. 집 주소를 넣거나 내 위치로 출발지를 정해 주세요.</p>
     <form class="addr" id="addrFormT" autocomplete="off">
       <label class="sr" for="homeAddrT">집 주소</label>
@@ -434,8 +465,9 @@ document.addEventListener('click',function(e){
       <button class="btn ghost js-pick" type="button" aria-pressed="false">지도에서 고르기</button>
     </div>
     <p class="msg js-msg">입력한 주소와 위치는 경로 찾기에만 쓰고 이 기기에만 기억해 둬요.</p>
+    </div>
     <div class="mapslot pickslot" id="slot-transit"></div>
-    <div class="from" id="planFrom">출발지를 먼저 정해 주세요.</div>
+    <div class="fromline" id="planFrom">출발지를 먼저 정해 주세요.</div>
     <div class="when"><span>언제</span>
       <div class="seg small" id="planWhen">
         <button type="button" data-w="now" aria-pressed="true">지금</button>
@@ -450,15 +482,22 @@ document.addEventListener('click',function(e){
   </section>
 
 
-  <section class="card" aria-labelledby="h-live">
+  <section class="card fold" aria-labelledby="h-live">
     <h2 id="h-live">🚏 제천 시내버스 실시간 도착</h2>
     <p class="note" id="liveIntro"></p>
-    <div class="seg" id="liveStops"></div>
+    <div class="livepick"><span>정류장</span>
+      <div class="chips" id="liveStops"></div>
+      <div id="liveMapBox" hidden>
+        <p class="note" id="liveMapNote">지도를 움직여 정류장(파란 점)을 누른 뒤 ‘이 정류장 보기’를 눌러 주세요.</p>
+        <div id="liveMap" role="region" aria-label="정류장 지도"></div>
+      </div>
+    </div>
+    <div class="livepick"><span>버스 번호</span><div class="chips" id="liveBuses"></div></div>
     <ul class="live" id="liveList" aria-live="polite"></ul>
     <p class="liveat"><span id="liveAt"></span> <button type="button" class="linkbtn" id="liveRefresh">↻ 새로고침</button></p>
   </section>
 
-  <section class="card" aria-labelledby="h-tr">
+  <section class="card fold" aria-labelledby="h-tr">
     <h2 id="h-tr">기차·시외버스·시내버스 시간표</h2>
     <p class="note">기차나 시외버스로 제천까지 온 뒤 시내버스·택시로 학교에 오면 돼요.</p>
     <div class="seg" role="tablist" id="trTabs">
@@ -483,7 +522,7 @@ document.addEventListener('click',function(e){
 </div>
 
 
-<section class="card about" aria-labelledby="h-about">
+<section class="card about fold" aria-labelledby="h-about">
   <h2 id="h-about">안내</h2>
   <ul class="aboutlist">
     <li><b>시간</b> 학교 공지 시간표 기준 (버스 실시간 위치는 알 수 없음)</li>
@@ -664,15 +703,30 @@ function srcShort() {
   const m = (DATA.source || "").match(/(\d)학기.*?(\d{4})\.(\d{2})\.(\d{2})/);
   return (m ? `${m[1]}학기 통학버스 공지(${+m[3]}/${+m[4]})` : "학교 통학버스 공지") + ` · ${DATA.built} 정리`;
 }
+const moreFold = (items, what) => items.length < 2 ? items.join("") :
+  items[0] + `<details class="more"><summary>${what} ${items.length - 1}곳 더 보기</summary>${items.slice(1).join("")}</details>`;
 // ---- 하교: 학교(문화관 앞 주차장)에서 출발해 내리는 곳 ----
 let sdir = "go", tdir = "go";
 let tsrc = "me";   // 등교 대중교통 출발지: 내 위치(me) 또는 집 주소(home) 중 마지막으로 정한 것
 function goFrom() { return (tsrc === "home" || !me) ? home : me; }
 function updatePlanFrom() {
-  const go = tdir === "go", p = go ? goFrom() : home;
-  const what = go ? (p && p === home ? "출발지(집)" : "출발지") : "도착지(집)";
-  $("#planFrom").innerHTML = p ? `${what}: <b>${esc(p.label || "고른 위치")}</b>` : (go ? "집 주소를 넣거나 내 위치로 출발지를 정해 주세요." : "집 주소를 먼저 넣어 주세요.");
+  const go = tdir === "go", p = go ? goFrom() : home, card = $("#planFrom").closest(".card");
+  const what = go ? (p && p === home ? "🏠 출발(집)" : "📍 출발") : "🏠 도착(집)";
+  $("#planFrom").innerHTML = p ? `<span>${what}</span><b>${esc(p.label || "고른 위치")}</b><button type="button" class="linkbtn" data-edit>바꾸기</button>`
+    : (go ? "집 주소를 넣거나 내 위치로 출발지를 정해 주세요." : "집 주소를 먼저 넣어 주세요.");
+  card.classList.toggle("set", !!p); card.classList.remove("edit");
   $("#planBtn").disabled = !p;
+}
+function autoPlan() {
+  if (view === "transit" && DATA && !$("#planBtn").disabled && !$("#planOut").innerHTML.trim()) $("#planBtn").click();
+}
+// 셔틀 카드 위 출발 줄 — 결과를 그릴 때마다 맞춘다(결과 HTML 앞에 붙일 빈 문자열을 돌려준다)
+function syncSetup() {
+  const back = sdir === "back", p = back ? home : goFrom(), card = $("#fromS").closest(".card"), w = shWhen();
+  $("#fromS").hidden = !p;
+  if (p) $("#fromS").innerHTML = `<span>${back ? "🏠 집" : p === home ? "🏠 출발(집)" : "📍 출발"}</span><b>${esc(p.label || "고른 위치")}${w.live ? "" : ` · ${w.label} 기준`}</b><button type="button" class="linkbtn" data-edit>바꾸기</button>`;
+  card.classList.toggle("set", !!p); card.classList.remove("edit");
+  return "";
 }
 function setTDir(d) {
   tdir = d;
@@ -702,7 +756,7 @@ function setHome(lat, lng, label) {
   if (view === "transit") { $("#planOut").innerHTML = ""; $("#planNote").textContent = "";
     setMsg(tdir === "back" ? "집을 정했어요. 아래 버튼으로 집까지 경로를 찾아보세요." : "집을 출발지로 정했어요. 아래 버튼으로 세명대까지 경로를 찾아보세요.", false, "transit"); }
   updatePlanFrom();
-  renderResults(); placeMap();
+  renderResults(); placeMap(); autoPlan();
 }
 
 // 집 주소 검색: 카카오 주소 검색 + 장소(아파트·건물 이름) 검색을 합쳐 후보 5개까지
@@ -792,9 +846,9 @@ function busBackLink(r, idx) {
 }
 
 function renderBackResults() {
-  if (!home) { $("#results").innerHTML = ""; setMsg("집 주소를 넣으면 가까운 하차 정류장과 다음 하교 버스를 알려 드려요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.", false, "shuttle"); return; }
+  if (!home) { $("#results").innerHTML = ""; syncSetup(); setMsg("집 주소를 넣으면 가까운 하차 정류장과 다음 하교 버스를 알려 드려요. 입력한 주소는 카카오 지도 검색에만 쓰고 이 기기에만 기억해요.", false, "shuttle"); return; }
   const w = shWhen(), now = w.at, list = nearestBack(home);
-  $("#results").innerHTML = `<div class="from">집: <b>${esc(home.label || "고른 위치")}</b>${w.live ? "" : ` · ${w.label} 기준`}</div>` + list.map((x, n) => {
+  $("#results").innerHTML = syncSetup() + moreFold(list.map((x, n) => {
     const d = describeBack(x, now, w.live);
     const name = encodeURIComponent(x.b.place || x.b.name), at = `${name},${x.b.lat},${x.b.lng}`;
     const walkHome = `https://map.kakao.com/link/by/walk/${at}/${encodeURIComponent((home.label || "집").replace(/,/g, " "))},${home.lat},${home.lng}`;
@@ -815,7 +869,7 @@ function renderBackResults() {
       ${d.reserve ? `<div class="reserve">막차 이전 차량은 당일 <b>11:20~13:00</b> 세명통통 예약<div class="links">${tongLinks("📱 세명통통 2.0으로 예약")}</div></div>` : ""}
       <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">📋 ${esc(x.r.name)} 노선 시간표</button><a href="${busBackLink(x.r, x.i)}" target="_blank" rel="noopener">🚌 하교 경로(카카오맵)</a><a href="${walkHome}" target="_blank" rel="noopener">내려서 집까지 길찾기</a></div>
     </article>`;
-  }).join("");
+  }), "다른 하차 정류장");
   const far = list[0] && list[0].k > 30;
   setMsg(far ? `가장 가까운 하차 정류장도 ${distText(list[0].k)} 떨어져 있어요. '대중교통' 탭도 확인해 보세요.`
              : "도착 시각은 학교 공지 소요시간으로 어림한 값이에요. 도로 사정에 따라 달라질 수 있어요.", false, "shuttle");
@@ -829,7 +883,7 @@ function setDir(v) {
   $("#findNote").textContent = v === "go"
     ? "집 주소나 아파트·건물 이름을 넣으면 가까운 승차 정류장과 다음 등교 버스를 알려 줘요."
     : "집 주소나 아파트·건물 이름을 넣으면 가까운 하차 정류장과 다음 하교 버스를 알려 줘요.";
-  if (v === "back" || goFrom()) renderResults(); else { $("#results").innerHTML = ""; setMsg("위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "shuttle"); }
+  if (v === "back" || goFrom()) renderResults(); else { $("#results").innerHTML = ""; syncSetup(); setMsg("위치는 이 기기 안에서만 쓰고 어디에도 보내지 않아요. 마지막 위치는 이 기기에만 기억해 둬요.", false, "shuttle"); }
   renderLists();
 }
 
@@ -880,9 +934,9 @@ function bindShWhen() {
 function renderResults() {
   if (sdir === "back") return renderBackResults();
   const from = goFrom();   // 집 주소와 내 위치 중 마지막으로 정한 곳(대중교통 등교와 같은 기준)
-  if (!from) return;
+  if (!from) return syncSetup();
   const w = shWhen(), now = w.at, list = nearest(from);
-  $("#results").innerHTML = `<div class="from">${from === home ? "출발(집)" : "출발"}: <b>${esc(from.label || "고른 위치")}</b>${w.live ? "" : ` · ${w.label} 기준`}</div>` + list.map((x, n) => {
+  $("#results").innerHTML = syncSetup() + moreFold(list.map((x, n) => {
     const d = describe(x, now, w.live);
     const walk = d.canWalk
       ? `<b>${d.walkMin}분</b><span>도보 ${distText(d.walkKm)}</span>`
@@ -900,7 +954,7 @@ function renderResults() {
       <div class="back">${esc(d.back)}</div>
       <div class="links"><button type="button" class="go-route" data-id="${x.r.id}">📋 ${esc(x.r.name)} 노선 시간표</button>${kakaoLinks(x.r, x.s, x.i)}</div>
     </article>`;
-  }).join("");
+  }), "다른 정류장");
 
   const far = list[0].k > 30;
   setMsg(far
@@ -914,6 +968,7 @@ function setMe(lat, lng, label, quiet) {
   if (!quiet) { tsrc = "me"; try { localStorage.setItem("shuttle-home", JSON.stringify(me)); } catch {} }
   if (tdir === "go") { $("#planOut").innerHTML = ""; $("#planNote").textContent = ""; }
   updatePlanFrom();
+  if (!quiet) autoPlan();
   if (tr.tab === "city") renderTransit();
   if (meMarker) meMarker.setMap(null);
   const el = document.createElement("div");
@@ -965,9 +1020,23 @@ function placeMap() {
   });
 }
 
+// 펼치기 카드
+function initFolds() {
+  document.querySelectorAll("section.fold").forEach(sec => {
+    const h = sec.querySelector("h2");
+    h.setAttribute("role", "button"); h.tabIndex = 0;
+    sec._set = o => { sec.classList.toggle("open", o); h.setAttribute("aria-expanded", o); };
+    sec._set(false);
+    h.addEventListener("click", () => sec._set(!sec.classList.contains("open")));
+    h.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); h.click(); } });
+  });
+}
+const openFold = id => { const sec = $("#" + id).closest(".fold"); if (sec) sec._set(true); };
+
 // 가까운 정류장 결과에서 그 노선의 시간표 칸을 펼친다
 function showRoute(id) {
   if (picking) togglePick();
+  openFold("h-routes");
   const d = document.querySelector(`details.rt[data-id="${id}"]`);
   if (!d) return;
   d.open = true;
@@ -993,7 +1062,7 @@ function showView(v, push) {
   if (push) history.replaceState(null, "", VIEW_HASH[v] || location.pathname + location.search);
   if (picking && map) togglePick(); else placeMap();
   setMeal(v === "back" || v === "tback" ? "저녁" : "점심");
-  if (view === "transit") showLive(); else clearTimeout(liveTimer);
+  if (view === "transit") { showLive(); autoPlan(); } else clearTimeout(liveTimer);
 }
 // 등교 탭은 점심, 하교 탭은 저녁 룰렛
 function setMeal(m) {
@@ -1376,7 +1445,7 @@ async function plan(place, back) {
       (viaHub ? "기차·시외버스는 시각표 기준, 시내 구간은 버스 기다리는 시간이 빠진 어림값이에요. 역·터미널에서 10분 여유를 두었어요."
               : "버스를 기다리는 시간은 빠져 있어요. 실시간 도착은 카카오맵에서 확인하세요.");
     const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
-    out.innerHTML = (cards.length ? cards.join("") : `<p class="note">찾은 경로가 없어요.</p>`) +
+    out.innerHTML = (cards.length ? moreFold(cards, "다른 경로").replace(/곳 더 보기/, "개 더 보기") : `<p class="note">찾은 경로가 없어요.</p>`) +
       `<div class="links"><a href="${k}" target="_blank" rel="noopener">카카오맵에서 실시간으로 보기</a></div><p class="note">경로 자료: 카카오맵 대중교통 API · 기차·시외버스는 시간표</p>`;
   } catch (e) {
     const k = `https://map.kakao.com/link/by/traffic/${encodeURIComponent(oName.replace(/,/g, " "))},${origin.lat},${origin.lng}/${encodeURIComponent(dName.replace(/,/g, " "))},${dest.lat},${dest.lng}`;
@@ -1400,29 +1469,64 @@ const LIVE_STOPS = {
          { label: "입구사거리", nodes: ["JCB273016028"], note: "세명대입구사거리 정류장에서 제천역·터미널 가는 버스(523·531번 포함)" }],
 };
 let liveSel = { go: 0, back: 0 }, liveTimer = null, liveShowAll = false;
-function renderLiveStops() {
-  const d = tdir, stops = LIVE_STOPS[d];
-  $("#liveStops").innerHTML = stops.map((x, i) => `<button type="button" data-i="${i}" aria-pressed="${i === liveSel[d]}">${esc(x.label)}</button>`).join("");
-  $("#liveStops").hidden = stops.length < 2;
-  const st = stops[liveSel[d]];
-  $("#liveIntro").textContent = st.note + "가 몇 분 뒤 오는지 보여 줘요. " + (d === "go" ? "학교 가는" : "제천역·터미널 가는") + " 번호(" + SCHOOL_BUS.join("·") + "번)를 먼저 보여 줘요." + (st.tip ? " " + st.tip : "");
+// 내가 고른 정류장(방향별 하나)과 버스 번호 — 이 기기에만 기억
+let liveCustom = { go: null, back: null }, liveBus = { go: "school", back: "school" };
+try { const v = JSON.parse(localStorage.getItem("shuttle-live") || "null"); if (v) { liveCustom = v.custom || liveCustom; liveBus = v.bus || liveBus; if (v.sel) liveSel = v.sel; } } catch {}
+const saveLive = () => { try { localStorage.setItem("shuttle-live", JSON.stringify({ custom: liveCustom, bus: liveBus, sel: liveSel })); } catch {} };
+// 제천 시내 정류장 1,500여 곳(정류장마다 지나는 버스·다음 정류장) — 처음 필요할 때 한 번 받는다
+let CITY_STOPS = null, liveBusAll = false, liveSeq = 0;
+const cityStops = () => CITY_STOPS || (CITY_STOPS = fetch("jecheon_stops.json").then(r => r.json()).then(j => j.stops).catch(() => (CITY_STOPS = null, [])));
+function liveStop() {
+  const d = tdir;
+  if (liveSel[d] === "c" && liveCustom[d]) return liveCustom[d];
+  if (liveSel[d] === "c") liveSel[d] = 0;
+  return LIVE_STOPS[d][liveSel[d]] || LIVE_STOPS[d][0];
+}
+const busKey = b => [parseInt(b) || 0, b];
+async function renderLiveStops() {
+  const d = tdir, stops = LIVE_STOPS[d], c = liveCustom[d];
+  $("#liveStops").innerHTML = stops.map((x, i) => `<button type="button" data-i="${i}" aria-pressed="${i === liveSel[d]}">${esc(x.label)}</button>`).join("") +
+    (c ? `<button type="button" data-i="c" aria-pressed="${liveSel[d] === "c"}">${esc(c.label)}<span class="x" data-x="1" aria-label="지우기">✕</span></button>` : "") +
+    `<button type="button" class="find" data-i="find">🗺️ 지도에서 찾기</button>`;
+  const st = liveStop();
+  $("#liveIntro").textContent = st.custom
+    ? `${st.label} 정류장${st.next ? `(다음 정류장: ${st.next})` : ""}에 오는 버스가 몇 분 뒤 오는지 보여 줘요.`
+    : st.note + "가 몇 분 뒤 오는지 보여 줘요." + (st.tip ? " " + st.tip : "");
+  // 버스 번호: 그 정류장을 지나는 노선(정류장 자료) — 자료를 못 받으면 학교 노선만
+  const all = await cityStops();
+  const buses = [...new Set(st.nodes.flatMap(n => (all.find(x => x.id === n) || {}).buses || []))].sort((a, b) => { const x = busKey(a), y = busKey(b); return x[0] - y[0] || (x[1] < y[1] ? -1 : 1); });
+  const school = SCHOOL_BUS.filter(b => !buses.length || buses.includes(b));
+  if (liveBus[d] === "school" && !school.length) liveBus[d] = "all";
+  if (!["school", "all"].includes(liveBus[d]) && buses.length && !buses.includes(liveBus[d])) liveBus[d] = "all";
+  const chip = (v, t) => `<button type="button" data-b="${esc(v)}" aria-pressed="${liveBus[d] === v}">${t}</button>`;
+  $("#liveBuses").innerHTML = (school.length ? chip("school", `${d === "go" ? "학교 가는" : "제천역·터미널 가는"} 버스 (${school.join("·")})`) : "") +
+    chip("all", "전체") + buses.map((b, i) => i < 12 || liveBusAll || liveBus[d] === b ? chip(b, esc(b) + "번") : "").join("") +
+    (buses.length > 12 && !liveBusAll ? `<button type="button" class="find" data-b="+">＋ ${buses.length - 12}개 더</button>` : "");
 }
 async function loadLive() {
   clearTimeout(liveTimer);
   if (view !== "transit" || document.hidden) return;
-  const stop = LIVE_STOPS[tdir][liveSel[tdir]], list = $("#liveList");
+  const stop = liveStop(), list = $("#liveList"), pick = liveBus[tdir];
   $("#liveAt").textContent = "불러오는 중…";
   try {
+    const my = ++liveSeq;
     const j = await fetch(BUSARR + "?nodes=" + stop.nodes.join(",")).then(r => r.json());
+    if (my !== liveSeq) return;   // 그사이 정류장·번호를 바꿨으면 늦게 온 옛 결과는 버린다
     if (!j.ok) throw new Error();
     // 도착 시간이 0으로 오는데 정류장이 많이 남은 경우(정보 갱신 전)는 정류장 수로 어림한다(1정류장 ≈ 1.5분)
     j.buses.forEach(b => { b.est = b.min <= 1 && b.prev > 3; if (b.est) b.min = Math.round(b.prev * 1.5); });
     j.buses.sort((a, b) => a.min - b.min);
-    const school = j.buses.filter(b => SCHOOL_BUS.includes(b.no)), other = j.buses.filter(b => !SCHOOL_BUS.includes(b.no));
     const row = (b, cls) => `<li class="${cls}${b.min <= 3 ? " soon" : ""}"><span class="no" style="--lc:${cls ? "#64748b" : "#3d6fd1"}">${esc(b.no)}</span>
       <span class="where"><b>${b.prev ? b.prev + "정류장 전" : "곧 도착"}</b>${esc(b.stop)}${b.low ? " · 저상버스" : ""}</span><time>${b.min <= 1 ? "곧 도착" : (b.est ? "약 " : "") + b.min + "분"}</time></li>`;
-    list.innerHTML = (school.length ? school.map(b => row(b, "")).join("") : `<li class="other">지금 이 정류장으로 오고 있는 ${tdir === "go" ? "학교행" : "제천역·터미널행"} 버스(${SCHOOL_BUS.join("·")}번)가 없어요. 시간표는 아래 ‘시내버스·택시’ 탭에서 볼 수 있어요.</li>`) +
-      (other.length ? (liveShowAll ? other.map(b => row(b, "other")).join("") : `<li class="more" id="liveMore">다른 노선 ${other.length}대 더 보기</li>`) : "");
+    if (pick === "school") {
+      const school = j.buses.filter(b => SCHOOL_BUS.includes(b.no)), other = j.buses.filter(b => !SCHOOL_BUS.includes(b.no));
+      list.innerHTML = (school.length ? school.map(b => row(b, "")).join("") : `<li class="other">지금 이 정류장으로 오고 있는 ${tdir === "go" ? "학교행" : "제천역·터미널행"} 버스(${SCHOOL_BUS.join("·")}번)가 없어요. 시간표는 아래 ‘시내버스·택시’ 탭에서 볼 수 있어요.</li>`) +
+        (other.length ? (liveShowAll ? other.map(b => row(b, "other")).join("") : `<li class="more" id="liveMore">다른 노선 ${other.length}대 더 보기</li>`) : "");
+    } else {
+      const sel = pick === "all" ? j.buses : j.buses.filter(b => b.no === pick);
+      list.innerHTML = sel.length ? sel.map(b => row(b, "")).join("")
+        : `<li class="other">지금 이 정류장으로 오고 있는 ${pick === "all" ? "버스" : esc(pick) + "번 버스"}가 없어요.</li>`;
+    }
     const t = new Date(j.at);
     $("#liveAt").textContent = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")} 기준 · 30초마다 새로 고침`;
   } catch {
@@ -1431,20 +1535,76 @@ async function loadLive() {
   }
   liveTimer = setTimeout(loadLive, 30000);
 }
+// 지도에서 정류장 고르기: 확대(레벨 5 이하)했을 때 화면 안 정류장만 점으로 그린다
+let liveMap = null, liveDots = [], livePop = null;
+function chooseLiveStop(x) {
+  liveCustom[tdir] = { label: x.name, nodes: [x.id], next: x.next.join(", "), custom: true };
+  liveSel[tdir] = "c"; liveBus[tdir] = "school"; liveBusAll = false; liveShowAll = false;
+  $("#liveMapBox").hidden = true; if (livePop) livePop.setMap(null);
+  saveLive(); renderLiveStops().then(loadLive);
+}
+async function drawLiveDots() {
+  const all = await cityStops();
+  liveDots.forEach(o => o.setMap(null)); liveDots = [];
+  if (liveMap.getLevel() > 5) { $("#liveMapNote").textContent = "지도를 확대하면 정류장이 보여요."; return; }
+  $("#liveMapNote").textContent = "정류장(파란 점)을 누른 뒤 ‘이 정류장 보기’를 눌러 주세요.";
+  const bd = liveMap.getBounds(), cur = liveStop().nodes[0];
+  all.filter(x => bd.contain(ll(x.lat, x.lng))).slice(0, 250).forEach(x => {
+    const el = document.createElement("button");
+    el.type = "button"; el.className = "livedot" + (x.id === cur ? " on" : ""); el.title = x.name;
+    el.addEventListener("click", () => {
+      if (livePop) livePop.setMap(null);
+      const p = document.createElement("div"); p.className = "pop";
+      p.innerHTML = `<b>${esc(x.name)}</b>${x.next.length ? `<br>다음 정류장: ${esc(x.next.join(", "))}` : ""}<br>${esc(x.buses.slice(0, 10).join("·"))}${x.buses.length > 10 ? " 등" : ""}번
+        <button type="button" class="pick">이 정류장 보기</button><button class="x" type="button" aria-label="닫기">×</button>`;
+      p.querySelector(".pick").addEventListener("click", () => chooseLiveStop(x));
+      p.querySelector(".x").addEventListener("click", () => livePop.setMap(null));
+      livePop = new kakao.maps.CustomOverlay({ position: ll(x.lat, x.lng), content: p, yAnchor: 1.15, zIndex: 20 });
+      livePop.setMap(liveMap);
+    });
+    const o = new kakao.maps.CustomOverlay({ position: ll(x.lat, x.lng), content: el, zIndex: x.id === cur ? 6 : 5 });
+    o.setMap(liveMap); liveDots.push(o);
+  });
+}
+async function toggleLiveMap() {
+  const box = $("#liveMapBox");
+  box.hidden = !box.hidden;
+  if (box.hidden || !(window.kakao && kakao.maps)) { if (!box.hidden) $("#liveMapNote").textContent = "지도를 불러오지 못했어요. 새로고침해 주세요."; return; }
+  const all = await cityStops(), cur = all.find(x => x.id === liveStop().nodes[0]);
+  const c = cur ? ll(cur.lat, cur.lng) : ll(37.1325, 128.2055);   // 기본: 제천 시내
+  if (!liveMap) {
+    liveMap = new kakao.maps.Map($("#liveMap"), { center: c, level: 4 });
+    liveMap.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+    kakao.maps.event.addListener(liveMap, "idle", drawLiveDots);
+  }
+  liveMap.relayout(); liveMap.setCenter(c); drawLiveDots();
+}
 function bindLive() {
-  $("#liveStops").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; liveSel[tdir] = +b.dataset.i; liveShowAll = false; renderLiveStops(); loadLive(); });
+  $("#liveStops").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.i === "find") { toggleLiveMap(); return; }
+    if (e.target.dataset.x) { liveCustom[tdir] = null; liveSel[tdir] = 0; }
+    else liveSel[tdir] = b.dataset.i === "c" ? "c" : +b.dataset.i;
+    liveBus[tdir] = "school"; liveBusAll = false; liveShowAll = false; saveLive(); renderLiveStops().then(loadLive);
+  });
+  $("#liveBuses").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.b === "+") { liveBusAll = true; renderLiveStops(); return; }
+    liveBus[tdir] = b.dataset.b; liveShowAll = false; saveLive(); renderLiveStops().then(loadLive);
+  });
   $("#liveList").addEventListener("click", e => { if (e.target.closest("#liveMore")) { liveShowAll = true; loadLive(); } });
   $("#liveRefresh").addEventListener("click", loadLive);
   $("#planOut").addEventListener("click", e => {
     const b = e.target.closest(".golive"); if (!b) return;
     const [d, i] = b.dataset.live.split(",");
-    if (d === tdir) liveSel[d] = +i;
-    liveShowAll = false; renderLiveStops(); loadLive();
+    if (d === tdir) { liveSel[d] = +i; liveBus[d] = "school"; }
+    liveShowAll = false; renderLiveStops().then(loadLive);
+    openFold("h-live");
     const h = $("#h-live"); window.scrollTo({ top: h.getBoundingClientRect().top + scrollY - $("#appbar").offsetHeight - 12, behavior: "smooth" });
   });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadLive(); });
 }
-function showLive() { liveShowAll = false; renderLiveStops(); loadLive(); }
+function showLive() { liveShowAll = false; renderLiveStops().then(loadLive); }
 
 // ---- 헤더 재난 소식 띠 (기상특보·재난뉴스, geoai-na Netlify 함수 alerts) ----
 const ALERTS = location.hostname === "localhost" ? "http://localhost:8899/alerts" : "https://geoai-na.netlify.app/.netlify/functions/alerts";
@@ -1492,7 +1652,8 @@ if (window.ResizeObserver) { const ro = new ResizeObserver(syncBars); ro.observe
 
 fetch("shuttle.json", { cache: "no-cache" }).then(r => r.json()).then(async d => {
   DATA = d;
-  renderToday(); renderLists(); bindTransit(); bindLive(); bindWhen(); bindShWhen();
+  document.addEventListener("click", e => { const b = e.target.closest("[data-edit]"); if (!b) return; const c = b.closest(".card"); c.classList.toggle("edit"); b.textContent = c.classList.contains("edit") ? "닫기" : "바꾸기"; });
+  initFolds(); renderToday(); renderLists(); bindTransit(); bindLive(); bindWhen(); bindShWhen();
   loadTicker(); setInterval(loadTicker, 5 * 60 * 1000);
   $("#tongAbout").innerHTML = tongLinks();
   if (DATA.service) $("#termNote").textContent = `${DATA.service.label}(${mdText(DATA.service.from)}~${mdText(DATA.service.to)})`;
