@@ -403,8 +403,8 @@ document.addEventListener('click',function(e){
 </header>
 
 <main>
-<a class="dinnerbar" href="https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link" target="_blank" rel="noopener" id="mealBar" aria-label="점심 메뉴 룰렛 열기">
-  <span class="ico">🍽️</span><span class="t"><b id="mealT">오늘 학교 가서 점심 뭐 먹지?</b><small id="mealS">점심 메뉴 룰렛 돌리기</small></span><span class="go">→</span>
+<a class="dinnerbar" href="https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content=lunch#hak" target="_blank" rel="noopener" id="mealBar" aria-label="오늘 학식 메뉴 열기">
+  <span class="ico">🍚</span><span class="t"><b id="mealT">오늘 학교 가서 점심 뭐 먹지?</b><small id="mealS">오늘 학식 메뉴 보기</small></span><span class="go">→</span>
 </a>
 
 <div class="view" id="view-shuttle" role="tabpanel" aria-labelledby="tab-go" data-dir="go">
@@ -1064,12 +1064,15 @@ function showView(v, push) {
   setMeal(v === "back" || v === "tback" ? "저녁" : "점심");
   if (view === "transit") { showLive(); autoPlan(); } else clearTimeout(liveTimer);
 }
-// 등교 탭은 점심, 하교 탭은 저녁 룰렛
+// 등교 탭은 점심 → 룰렛 앱의 🍚 학식 탭(#hak), 하교 탭은 저녁 → 🎡 룰렛 탭
 function setMeal(m) {
-  $("#mealT").textContent = m === "저녁" ? "오늘 집에 가서 저녁 뭐 먹지?" : "오늘 학교 가서 점심 뭐 먹지?";
-  $("#mealS").textContent = m === "저녁" ? "하교길 저녁 메뉴 룰렛 돌리기" : "점심 메뉴 룰렛 돌리기";
-  $("#mealBar").setAttribute("aria-label", `${m} 메뉴 룰렛 열기`);
-  $("#mealBar").href = `https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content=${m === "저녁" ? "dinner" : "lunch"}`;
+  const lunch = m !== "저녁";
+  $("#mealT").textContent = lunch ? "오늘 학교 가서 점심 뭐 먹지?" : "오늘 집에 가서 저녁 뭐 먹지?";
+  $("#mealS").textContent = lunch ? "오늘 학식 메뉴 보기" : "하교길 저녁 메뉴 룰렛 돌리기";
+  $("#mealBar .ico").textContent = lunch ? "🍚" : "🍽️";
+  $("#mealBar").setAttribute("aria-label", lunch ? "오늘 학식 메뉴 열기" : "저녁 메뉴 룰렛 열기");
+  $("#mealBar").href = "https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content="
+    + (lunch ? "lunch#hak" : "dinner#roulette");
 }
 
 function stopPopup(r, s) {
