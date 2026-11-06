@@ -50,7 +50,8 @@ main{max-width:752px;margin:0 auto;padding:calc(var(--top,140px) + 14px) 16px ca
 .tk-in b.k-특보,.tk-in b.k-문자{background:#dc2626}
 .tk-in b.k-예비특보{background:#ea580c}
 @keyframes tk{to{transform:translateX(-100%)}}
-@media (prefers-reduced-motion:reduce){.tk-in{animation:none;padding-left:0}}
+/* 움직임 줄이기(Windows 애니메이션 효과 끔 등)에서도 멈추면 첫 소식 말고는 안 보이므로, 끄지 않고 절반 속도로 흐르게 한다(마우스를 올리면 멈춤) */
+@media (prefers-reduced-motion:reduce){.tk-in{animation-duration:calc(var(--tkdur,40s) * 2)}}
 .ftxt{display:grid;font-size:13px;line-height:1.35;color:var(--sub);min-width:0}
 .ftxt a{color:var(--ink);font-weight:800;text-decoration:none;display:inline-block;padding:6px 0;margin:-6px 0}
 .fhome{margin-left:auto;padding:0 14px;min-height:44px;display:inline-flex;align-items:center;border-radius:10px;background:var(--soft);color:var(--brand);font-weight:800;font-size:15px;text-decoration:none;white-space:nowrap}
@@ -250,7 +251,7 @@ th{font-size:12px;color:var(--sub)}
 .campus{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:grid;place-items:center;
   font-weight:900;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}*:not(.tk-in){animation:none!important}}
 /* ---- 스마트폰 가독성: 본문 16px 기준, 작은 글자 13px 이상, 누르는 곳 44px 이상 ---- */
 .card{padding:16px;border-radius:18px}
 .card h2{font-size:19px;margin:0 0 12px}
