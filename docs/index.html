@@ -381,7 +381,7 @@ document.addEventListener('click',function(e){
   else if(h.indexOf('/link/by/car/')>-1) k='route_bus';
   else if(h.indexOf('/link/by/traffic/')>-1) k='route_transit';
   else if(h.indexOf('map.kakao.com/link/')>-1) k='map_view';
-  else if(h.indexOf('geoai-na.netlify.app/dinner')>-1) k='dinner';
+  else if(h.indexOf('geoai-na.web.app/dinner')>-1) k='dinner';
   if(k) gtag('event','shuttle_click',{kind:k});   // 종류 이름만 — href 는 보내지 않는다
 },true);</script>
 </head>
@@ -403,7 +403,7 @@ document.addEventListener('click',function(e){
 </header>
 
 <main>
-<a class="dinnerbar" href="https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content=lunch#hak" target="_blank" rel="noopener" id="mealBar" aria-label="오늘 학식 메뉴 열기">
+<a class="dinnerbar" href="https://geoai-na.web.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content=lunch#hak" target="_blank" rel="noopener" id="mealBar" aria-label="오늘 학식 메뉴 열기">
   <span class="ico">🍚</span><span class="t"><b id="mealT">오늘 학교 가서 점심 뭐 먹지?</b><small id="mealS">오늘 학식 메뉴 보기</small></span><span class="go">→</span>
 </a>
 
@@ -1071,7 +1071,7 @@ function setMeal(m) {
   $("#mealS").textContent = lunch ? "오늘 학식 메뉴 보기" : "하교길 저녁 메뉴 룰렛 돌리기";
   $("#mealBar .ico").textContent = lunch ? "🍚" : "🍽️";
   $("#mealBar").setAttribute("aria-label", lunch ? "오늘 학식 메뉴 열기" : "저녁 메뉴 룰렛 열기");
-  $("#mealBar").href = "https://geoai-na.netlify.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content="
+  $("#mealBar").href = "https://geoai-na.web.app/dinner/?utm_source=shuttle&utm_medium=link&utm_content="
     + (lunch ? "lunch#hak" : "dinner#roulette");
 }
 
@@ -1242,7 +1242,7 @@ function bindTransit() {
 // 대중교통 경로: 카카오맵 대중교통 API(geoai-na Netlify 함수가 키를 숨겨 대신 부름, 하루 1,000건 무료).
 // 카카오는 시내 구간만 찾고 출발 시각이 없어서, 기차·시외버스는 저장해 둔 시간표(아사마루)로 잇는다.
 // 로컬 미리보기(localhost)에서는 같은 함수를 이 컴퓨터에서 띄운 것(scripts/kroute_dev.js)을 쓴다
-const KROUTE = location.hostname === "localhost" ? "http://localhost:8899/kroute" : "https://geoai-na.netlify.app/.netlify/functions/kroute";
+const KROUTE = location.hostname === "localhost" ? "http://localhost:8899/kroute" : "https://geoai-na.web.app/fn/kroute";
 const ICON = { 1: "🚇", 2: "🚌", 3: "🚶", 4: "🚄", 5: "🚌", 6: "🚌", 7: "✈️" };
 const KIND = { 4: "기차", 5: "고속버스", 6: "시외버스", 7: "항공" };
 const krCache = new Map();
@@ -1460,7 +1460,7 @@ async function plan(place, back) {
 }
 
 // ---- 제천 시내버스 실시간 도착 (TAGO 버스도착정보, geoai-na Netlify 함수 busarr 가 키를 숨겨 중계) ----
-const BUSARR = location.hostname === "localhost" ? "http://localhost:8899/busarr" : "https://geoai-na.netlify.app/.netlify/functions/busarr";
+const BUSARR = location.hostname === "localhost" ? "http://localhost:8899/busarr" : "https://geoai-na.web.app/fn/busarr";
 const SCHOOL_BUS = ["31", "35", "53", "523", "531"];   // 제천역·터미널 ↔ 세명대 노선(TAGO 버스노선정보로 확인, 523·531은 세명대입구사거리까지)
 // 정류장은 방향이 맞는 쪽만(TAGO 노선별 경유 정류장 순서로 확인 — 길 건너편 정류장은 반대 방향)
 const LIVE_STOPS = {
@@ -1610,7 +1610,7 @@ function bindLive() {
 function showLive() { liveShowAll = false; renderLiveStops().then(loadLive); }
 
 // ---- 헤더 재난 소식 띠 (기상특보·재난뉴스, geoai-na Netlify 함수 alerts) ----
-const ALERTS = location.hostname === "localhost" ? "http://localhost:8899/alerts" : "https://geoai-na.netlify.app/.netlify/functions/alerts";
+const ALERTS = location.hostname === "localhost" ? "http://localhost:8899/alerts" : "https://geoai-na.web.app/fn/alerts";
 async function loadTicker() {
   try {
     const j = await fetch(ALERTS).then(r => r.json());
